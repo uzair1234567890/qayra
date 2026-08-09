@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 interface OrderItem {
@@ -67,7 +68,12 @@ export default function AdminOrderRow({ order }: AdminOrderRowProps) {
   return (
     <tr className="hover:bg-[#1A1815]/50 text-xs">
       <td className="p-4">
-        <div className="font-mono text-[#D4AF37] font-bold text-sm">#{order.orderNumber}</div>
+        <Link
+          href={`/admin/orders/${order.id}`}
+          className="font-mono text-[#D4AF37] font-bold text-sm hover:underline block"
+        >
+          #{order.orderNumber}
+        </Link>
         <div className="text-[10px] text-[#787063] mt-0.5">
           {new Date(order.createdAt).toLocaleDateString('en-IN', {
             month: 'short',
@@ -129,6 +135,15 @@ export default function AdminOrderRow({ order }: AdminOrderRowProps) {
             <option key={st} value={st}>{st}</option>
           ))}
         </select>
+      </td>
+
+      <td className="p-4">
+        <Link
+          href={`/admin/orders/${order.id}`}
+          className="px-3 py-1.5 bg-[#1A1815] hover:bg-[#D4AF37] border border-[#29241F] hover:border-[#D4AF37] text-[#FDFBF7] hover:text-[#0A0908] rounded text-[11px] font-bold uppercase tracking-wider transition-all inline-block"
+        >
+          View Details
+        </Link>
       </td>
     </tr>
   );

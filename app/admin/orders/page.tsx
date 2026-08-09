@@ -51,9 +51,10 @@ export default async function AdminOrdersPage() {
                     <th className="p-4">Order Details</th>
                     <th className="p-4">Customer & Address</th>
                     <th className="p-4">Order Items</th>
-                    <th className="p-4">Total Paid</th>
-                    <th className="p-4">Payment Status</th>
-                    <th className="p-4">Fulfillment Status</th>
+                    <th className="p-4 font-bold">Total Paid</th>
+                    <th className="p-4 font-bold">Payment Status</th>
+                    <th className="p-4 font-bold">Fulfillment Status</th>
+                    <th className="p-4 font-bold">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#29241F] text-[#FDFBF7]">
