@@ -45,7 +45,7 @@ async function main() {
       isActive: true,
       isFeatured: true,
       rating: 4.95,
-      reviewsCount: 38,
+      reviewsCount: 3,
     },
     {
       name: 'Amber & Smoked Cedar',
@@ -65,7 +65,7 @@ async function main() {
       isActive: true,
       isFeatured: true,
       rating: 4.88,
-      reviewsCount: 29,
+      reviewsCount: 2,
     },
     {
       name: 'Velvet Leather & Tobacco',
@@ -85,7 +85,7 @@ async function main() {
       isActive: true,
       isFeatured: true,
       rating: 4.92,
-      reviewsCount: 42,
+      reviewsCount: 2,
     },
     {
       name: 'Royal Spiced Sandalwood',
@@ -105,59 +105,55 @@ async function main() {
       isActive: true,
       isFeatured: false,
       rating: 4.85,
-      reviewsCount: 19,
-    },
-    {
-      name: 'Imperial Citrus & Bergamot',
-      slug: 'imperial-citrus-bergamot',
-      subtitle: 'Calabrian Bergamot & Sun-Drenched Vetiver',
-      description: 'An invigorating citrus burst anchored by sophisticated vetiver and white amber. Perfect for refreshing daytime commutes with crisp luxury clarity.',
-      scentFamily: 'Fresh & Citrus',
-      topNotes: 'Calabrian Bergamot, Blood Orange, Grapefruit',
-      heartNotes: 'Neroli, Green Tea, Juniper',
-      baseNotes: 'Haitian Vetiver, White Amber, Cedarwood',
-      intensity: 3,
-      longevity: '45 Days',
-      price: 1199,
-      originalPrice: 1499,
-      images: JSON.stringify(['/images/products/oud_nocturne.jpg']),
-      stock: 50,
-      isActive: true,
-      isFeatured: false,
-      rating: 4.80,
-      reviewsCount: 15,
-    },
-    {
-      name: 'Smoked Vanilla & Bourbon',
-      slug: 'smoked-vanilla-bourbon',
-      subtitle: 'Madagascar Vanilla & Oak Cask Bourbon',
-      description: 'Intoxicatingly rich Madagascar vanilla pod smoked over aged oak casks with toasted praline. A decadent gourmand fragrance for luxury interiors.',
-      scentFamily: 'Amber & Spice',
-      topNotes: 'Toasted Almond, Cinnamon Bark',
-      heartNotes: 'Bourbon Accord, Orchid Blossom',
-      baseNotes: 'Madagascar Vanilla Pod, Smoked Oak, Benzoin',
-      intensity: 4,
-      longevity: '60 Days',
-      price: 1399,
-      originalPrice: 1799,
-      images: JSON.stringify(['/images/products/amber_cedar.jpg']),
-      stock: 18,
-      isActive: true,
-      isFeatured: true,
-      rating: 4.90,
-      reviewsCount: 31,
+      reviewsCount: 2,
     },
   ];
 
   for (const prod of sampleProducts) {
-    await prisma.product.upsert({
+    const createdProduct = await prisma.product.upsert({
       where: { slug: prod.slug },
       update: prod,
       create: prod,
     });
+
+    // Seed sample verified buyer reviews if none exist
+    const existingReviewsCount = await prisma.review.count({
+      where: { productId: createdProduct.id },
+    });
+
+    if (existingReviewsCount === 0) {
+      await prisma.review.createMany({
+        data: [
+          {
+            productId: createdProduct.id,
+            authorName: 'Vikramaditya S.',
+            rating: 5,
+            title: 'Exquisite vehicle scent — pure luxury',
+            comment: 'Transformed my sedan interior completely. The wood cap diffusion is subtle and never overwhelming. Lasts over two months without losing its amber depth.',
+            isVerified: true,
+          },
+          {
+            productId: createdProduct.id,
+            authorName: 'Ananya R.',
+            rating: 5,
+            title: 'Unmatched longevity and aesthetic',
+            comment: 'The hanging vial design looks stunning on the rear view mirror. Everyone who enters the car asks what fragrance I am using.',
+            isVerified: true,
+          },
+          {
+            productId: createdProduct.id,
+            authorName: 'Rohan K.',
+            rating: 4,
+            title: 'Refined oud notes without synthetic feel',
+            comment: 'Very premium packaging and authentic wood fragrance notes. Highly recommended for long highway drives.',
+            isVerified: true,
+          },
+        ],
+      });
+    }
   }
 
-  console.log('Seeded 6 Qayra luxury car perfumes successfully!');
+  console.log('Seeded products and verified customer reviews successfully!');
 }
 
 main()

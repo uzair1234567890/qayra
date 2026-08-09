@@ -7,6 +7,7 @@ import { prisma } from '@/lib/db';
 import ScentPyramid from '@/components/ScentPyramid';
 import ProductCard from '@/components/ProductCard';
 import ProductBuyActions from './ProductBuyActions';
+import ProductReviews from '@/components/ProductReviews';
 
 export const revalidate = 0; // Dynamic route for individual perfume
 
@@ -23,6 +24,11 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
     where: {
       OR: [{ slug }, { id: slug }],
       isActive: true,
+    },
+    include: {
+      reviews: {
+        orderBy: { createdAt: 'desc' },
+      },
     },
   });
 
@@ -175,6 +181,14 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
         topNotes={product.topNotes}
         heartNotes={product.heartNotes}
         baseNotes={product.baseNotes}
+      />
+
+      {/* Customer Reviews Section */}
+      <ProductReviews
+        productId={product.id}
+        initialReviews={product.reviews}
+        initialRating={product.rating}
+        initialCount={product.reviewsCount}
       />
 
       {/* How to Use / Hanging Instructions */}

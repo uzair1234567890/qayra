@@ -33,6 +33,7 @@ model Product {
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
   orderItems    OrderItem[]
+  reviews       Review[]
 }
 
 model Order {
@@ -74,4 +75,16 @@ model Admin {
   name         String
   role         String   @default("ADMIN")
   createdAt    DateTime @default(now())
+}
+
+model Review {
+  id         String   @id @default(uuid())
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  authorName String
+  rating     Int      @default(5)
+  title      String
+  comment    String
+  isVerified Boolean  @default(true)
+  createdAt  DateTime @default(now())
 }
