@@ -1,0 +1,77 @@
+// Prisma schema for Qayra Luxury Car Perfumes
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Product {
+  id            String      @id @default(uuid())
+  name          String
+  slug          String      @unique
+  subtitle      String?
+  description   String
+  scentFamily   String      // e.g. "Oud & Wood", "Amber & Spice", "Leather & Smoke", "Fresh & Citrus"
+  topNotes      String      // Comma-separated or JSON list
+  heartNotes    String
+  baseNotes     String
+  intensity     Int         @default(4) // 1-5 scale
+  longevity     String      @default("45-60 Days")
+  price         Float
+  originalPrice Float?
+  images        String      // JSON array of image URLs
+  stock         Int         @default(50)
+  isActive      Boolean     @default(true)
+  isFeatured    Boolean     @default(false)
+  rating        Float       @default(4.9)
+  reviewsCount  Int         @default(24)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  orderItems    OrderItem[]
+}
+
+model Order {
+  id               String      @id @default(uuid())
+  orderNumber      String      @unique
+  customerName     String
+  customerEmail    String
+  customerPhone    String
+  shippingAddress  String
+  city             String
+  state            String
+  pincode          String
+  totalAmount      Float
+  paymentStatus    String      @default("PENDING") // PENDING, PAID, FAILED
+  orderStatus      String      @default("PENDING") // PENDING, PROCESSING, SHIPPED, DELIVERED, CANCELLED
+  razorpayOrderId  String?
+  razorpayPaymentId String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  items            OrderItem[]
+}
+
+model OrderItem {
+  id           String   @id @default(uuid())
+  orderId      String
+  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId    String
+  product      Product  @relation(fields: [productId], references: [id])
+  productName  String
+  productImage String
+  price        Float
+  quantity     Int
+}
+
+model Admin {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         String   @default("ADMIN")
+  createdAt    DateTime @default(now())
+}

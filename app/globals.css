@@ -1,0 +1,82 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+:root {
+  --bg-main: #0A0908;
+  --bg-surface: #141210;
+  --bg-card: #1A1815;
+  --bg-card-hover: #221F1B;
+  
+  --text-primary: #FDFBF7;
+  --text-secondary: #B5AC9E;
+  --text-muted: #787063;
+  
+  --gold-primary: #D4AF37;
+  --gold-light: #F3E5AB;
+  --gold-dark: #A38220;
+  --amber-accent: #E69A28;
+  
+  --border-subtle: #29241F;
+  --border-gold: #5E4E26;
+  --border-gold-bright: #C5A059;
+}
+
+body {
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, .font-serif {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+}
+
+/* Custom Utilities */
+.gold-gradient-text {
+  background: linear-gradient(135deg, #F3E5AB 0%, #D4AF37 50%, #A38220 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gold-gradient-bg {
+  background: linear-gradient(135deg, #D4AF37 0%, #C5A059 100%);
+}
+
+.gold-border-glow {
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.15);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+.glass-header {
+  background: rgba(10, 9, 8, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(44, 39, 35, 0.8);
+}
+
+.glass-panel {
+  background: rgba(26, 24, 21, 0.7);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(44, 39, 35, 0.8);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0A0908;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #29241F;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #D4AF37;
+}
