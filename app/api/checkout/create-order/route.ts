@@ -7,8 +7,8 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { items, customerName, customerEmail, customerPhone, shippingAddress, city, state, pincode } = body;
 
-    if (!items || !items.length || !customerName || !customerEmail || !shippingAddress || !pincode) {
-      return NextResponse.json({ error: 'Missing required order fields' }, { status: 400 });
+    if (!items || !items.length || !customerName || !customerEmail || !customerPhone || !shippingAddress || !pincode) {
+      return NextResponse.json({ error: 'Missing required order fields (Name, Email, Mobile Number, Address, or Pincode)' }, { status: 400 });
     }
 
     // Validate cart products and re-calculate actual total price against DB prices

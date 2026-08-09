@@ -49,8 +49,8 @@ export default function CheckoutPage() {
     if (e) e.preventDefault();
     setErrorMessage('');
 
-    if (!customerName || !customerEmail || !shippingAddress || !pincode) {
-      setErrorMessage('Please fill in all required shipping address fields.');
+    if (!customerName || !customerEmail || !customerPhone || !shippingAddress || !pincode) {
+      setErrorMessage('Please fill in all required shipping address fields (Name, Email, Mobile Number, Address, and Pincode).');
       return;
     }
 
@@ -240,9 +240,10 @@ export default function CheckoutPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[#A0988E] font-medium uppercase tracking-wider">Phone Number (For Express Delivery SMS updates)</label>
+                <label className="text-[#A0988E] font-medium uppercase tracking-wider">Mobile Number *</label>
                 <input
                   type="tel"
+                  required
                   placeholder="+91 98765 43210"
                   value={customerPhone}
                   onChange={(e) => setCustomerPhone(e.target.value)}
