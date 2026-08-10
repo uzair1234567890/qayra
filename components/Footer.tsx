@@ -26,7 +26,7 @@ export default function Footer() {
           </div>
           <div>
             <h4 className="text-sm font-serif font-semibold text-[#FDFBF7] uppercase tracking-wider">
-              60-Day Diffuser Longevity
+              40-Day Diffuser Longevity
             </h4>
             <p className="text-xs text-[#787063] mt-1 leading-relaxed">
               Formulated with high-concentration perfume oils released gradually through wood diffusion.

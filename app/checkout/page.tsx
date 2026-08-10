@@ -25,12 +25,42 @@ export default function CheckoutPage() {
   const [state, setState] = useState('');
   const [pincode, setPincode] = useState('');
 
+  const [couponInput, setCouponInput] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState('');
+  const [couponError, setCouponError] = useState('');
+
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
+  // Coupon discount calculation
+  let discountPct = 0;
+  if (appliedCoupon === 'ROYAL15') discountPct = 0.15;
+  if (appliedCoupon === 'EXECUTIVE20') discountPct = 0.20;
+
+  const discountAmount = Math.round(subtotal * discountPct);
+  const discountedSubtotal = Math.max(0, subtotal - discountAmount);
+
   const FREE_SHIPPING_THRESHOLD = 1499;
-  const shippingFee = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : 99;
-  const totalAmount = subtotal + shippingFee;
+  const shippingFee = discountedSubtotal >= FREE_SHIPPING_THRESHOLD ? 0 : 99;
+  const totalAmount = discountedSubtotal + shippingFee;
+
+  const handleApplyCoupon = (e: React.FormEvent) => {
+    e.preventDefault();
+    setCouponError('');
+    const code = couponInput.trim().toUpperCase();
+
+    if (code === 'ROYAL15' || code === 'EXECUTIVE20') {
+      setAppliedCoupon(code);
+      setCouponInput('');
+    } else {
+      setCouponError('Invalid coupon code. Try ROYAL15 for 15% OFF.');
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon('');
+    setCouponError('');
+  };
 
   // Load Razorpay JS SDK
   useEffect(() => {
@@ -75,6 +105,7 @@ export default function CheckoutPage() {
           city,
           state,
           pincode,
+          couponCode: appliedCoupon,
         }),
       });
 
@@ -328,12 +359,61 @@ export default function CheckoutPage() {
               ))}
             </div>
 
+            {/* Coupon Code Input */}
+            <div className="pt-2 border-t border-[#29241F] space-y-2">
+              <label className="text-[10px] uppercase tracking-wider text-[#A0988E] font-semibold">Have a Promo Coupon?</label>
+              {appliedCoupon ? (
+                <div className="flex items-center justify-between bg-[#1A1815] border border-[#52B788]/40 p-2.5 rounded text-xs">
+                  <div className="flex items-center space-x-2">
+                    <Sparkles className="w-3.5 h-3.5 text-[#52B788]" />
+                    <span className="font-mono text-[#52B788] font-bold">{appliedCoupon}</span>
+                    <span className="text-[10px] text-[#A0988E]">({appliedCoupon === 'ROYAL15' ? '15%' : '20%'} OFF Applied)</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRemoveCoupon}
+                    className="text-[10px] text-[#E63946] hover:underline"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ) : (
+                <div className="flex space-x-2">
+                  <input
+                    type="text"
+                    placeholder="Enter ROYAL15"
+                    value={couponInput}
+                    onChange={(e) => setCouponInput(e.target.value)}
+                    className="flex-1 bg-[#1A1815] border border-[#29241F] focus:border-[#D4AF37] text-xs text-[#FDFBF7] px-3 py-2 rounded focus:outline-none uppercase placeholder-[#787063]"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleApplyCoupon}
+                    className="px-4 py-2 bg-[#1A1815] hover:bg-[#D4AF37] border border-[#C5A059]/40 hover:border-[#D4AF37] text-[#D4AF37] hover:text-[#0A0908] text-xs font-semibold uppercase tracking-wider rounded transition-colors"
+                  >
+                    Apply
+                  </button>
+                </div>
+              )}
+              {couponError && (
+                <p className="text-[10px] text-[#E63946] font-medium">{couponError}</p>
+              )}
+            </div>
+
             {/* Cost Breakdown */}
             <div className="space-y-2 text-xs border-t border-[#29241F] pt-4">
               <div className="flex justify-between text-[#A0988E]">
                 <span>Items Subtotal</span>
                 <span>₹{subtotal.toLocaleString('en-IN')}</span>
               </div>
+
+              {discountAmount > 0 && (
+                <div className="flex justify-between text-[#52B788] font-medium">
+                  <span>Promo Discount ({appliedCoupon})</span>
+                  <span>- ₹{discountAmount.toLocaleString('en-IN')}</span>
+                </div>
+              )}
+
               <div className="flex justify-between text-[#A0988E]">
                 <span>India Express Delivery</span>
                 <span className="text-[#D4AF37] font-medium">

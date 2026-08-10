@@ -15,11 +15,32 @@ export default async function AdminOrdersPage() {
   }
 
   const orders = await prisma.order.findMany({
-    include: {
-      items: true,
-    },
     orderBy: {
       createdAt: 'desc',
+    },
+    select: {
+      id: true,
+      orderNumber: true,
+      customerName: true,
+      customerEmail: true,
+      customerPhone: true,
+      shippingAddress: true,
+      city: true,
+      state: true,
+      pincode: true,
+      totalAmount: true,
+      paymentStatus: true,
+      orderStatus: true,
+      createdAt: true,
+      items: {
+        select: {
+          id: true,
+          productName: true,
+          productImage: true,
+          price: true,
+          quantity: true,
+        },
+      },
     },
   });
 

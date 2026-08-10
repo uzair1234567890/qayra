@@ -15,22 +15,49 @@ export default async function AdminDashboardPage() {
     redirect('/admin/login');
   }
 
-  // Fetch metrics data
-  const orders = await prisma.order.findMany({
-    include: { items: true },
-    orderBy: { createdAt: 'desc' },
-  });
+  // Fetch metrics data concurrently for maximum execution speed
+  const [
+    revenueResult,
+    totalOrdersCount,
+    pendingOrdersCount,
+    totalProductsCount,
+    activeProductsCount,
+    lowStockProducts,
+    recentOrders,
+  ] = await Promise.all([
+    prisma.order.aggregate({
+      _sum: { totalAmount: true },
+      where: { paymentStatus: 'PAID' },
+    }),
+    prisma.order.count(),
+    prisma.order.count({
+      where: { orderStatus: { in: ['PENDING', 'PROCESSING'] } },
+    }),
+    prisma.product.count(),
+    prisma.product.count({
+      where: { isActive: true },
+    }),
+    prisma.product.findMany({
+      where: { stock: { lte: 15 } },
+      select: { id: true, name: true, stock: true },
+      orderBy: { stock: 'asc' },
+    }),
+    prisma.order.findMany({
+      take: 5,
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        orderNumber: true,
+        customerName: true,
+        totalAmount: true,
+        paymentStatus: true,
+        orderStatus: true,
+        createdAt: true,
+      },
+    }),
+  ]);
 
-  const products = await prisma.product.findMany({
-    orderBy: { stock: 'asc' },
-  });
-
-  const totalPaidRevenue = orders
-    .filter((o) => o.paymentStatus === 'PAID')
-    .reduce((sum, o) => sum + o.totalAmount, 0);
-
-  const lowStockProducts = products.filter((p) => p.stock <= 15);
-  const recentOrders = orders.slice(0, 5);
+  const totalPaidRevenue = revenueResult._sum.totalAmount || 0;
 
   return (
     <div className="flex min-h-screen bg-[#0A0908]">
@@ -83,10 +110,10 @@ export default async function AdminDashboardPage() {
               </div>
             </div>
             <div className="font-serif text-3xl font-bold text-[#FDFBF7]">
-              {orders.length}
+              {totalOrdersCount}
             </div>
             <p className="text-[11px] text-[#787063]">
-              {orders.filter((o) => o.orderStatus === 'PROCESSING' || o.orderStatus === 'PENDING').length} pending dispatch
+              {pendingOrdersCount} pending dispatch
             </p>
           </div>
 
@@ -99,10 +126,10 @@ export default async function AdminDashboardPage() {
               </div>
             </div>
             <div className="font-serif text-3xl font-bold text-[#FDFBF7]">
-              {products.length}
+              {totalProductsCount}
             </div>
             <p className="text-[11px] text-[#787063]">
-              {products.filter((p) => p.isActive).length} active in storefront
+              {activeProductsCount} active in storefront
             </p>
           </div>
 

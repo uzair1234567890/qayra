@@ -76,7 +76,7 @@ export default function ProductBuyActions({ product }: ProductBuyActionsProps) {
         </div>
       </div>
 
-      {/* Buttons */}
+      {/* Action Buttons */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
         <button
           onClick={handleAddToCart}
@@ -95,6 +95,53 @@ export default function ProductBuyActions({ product }: ProductBuyActionsProps) {
           <Zap className="w-4 h-4 fill-[#0A0908]" />
           <span>Instant Checkout</span>
         </button>
+      </div>
+
+      {/* Social Proof & Scarcity Tickers */}
+      <div className="pt-2 space-y-2">
+        <div className="flex items-center space-x-2 text-xs text-[#E69A28] bg-[#E69A28]/10 border border-[#E69A28]/30 px-3 py-2 rounded">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#E69A28] opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#E69A28]"></span>
+          </span>
+          <span className="font-semibold">🔥 14 fragrance connoisseurs are viewing this scent right now</span>
+        </div>
+
+        <div className="flex items-center justify-between text-[11px] text-[#A0988E] pt-1">
+          <span className="flex items-center gap-1 text-[#52B788] font-medium">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#52B788]"></span> In Stock & Ready to Dispatch
+          </span>
+          <span className="text-[#D4AF37] hover:underline cursor-pointer">
+            🛡️ Risk-Free 30-Day Scent Guarantee
+          </span>
+        </div>
+      </div>
+
+      {/* Sticky Mobile Bottom Purchase Bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-[#141210]/95 backdrop-blur-md border-t border-[#C5A059]/40 p-3 sm:hidden shadow-2xl flex items-center justify-between gap-3">
+        <div>
+          <div className="text-[10px] text-[#A0988E] uppercase tracking-wider">Total Price</div>
+          <div className="font-serif text-lg font-bold text-[#D4AF37]">
+            ₹{(product.price * quantity).toLocaleString('en-IN')}
+          </div>
+        </div>
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={handleAddToCart}
+            disabled={product.stock <= 0}
+            className="px-4 py-3 bg-[#1A1815] border border-[#C5A059]/40 text-[#FDFBF7] font-semibold text-xs uppercase tracking-wider rounded active:scale-95 disabled:opacity-50"
+          >
+            Add
+          </button>
+          <button
+            onClick={handleBuyNow}
+            disabled={product.stock <= 0}
+            className="px-5 py-3 bg-gradient-to-r from-[#D4AF37] to-[#C5A059] text-[#0A0908] font-bold text-xs uppercase tracking-wider rounded shadow-lg active:scale-95 disabled:opacity-50 flex items-center gap-1"
+          >
+            <Zap className="w-3.5 h-3.5 fill-[#0A0908]" />
+            <span>Buy Now</span>
+          </button>
+        </div>
       </div>
     </div>
   );

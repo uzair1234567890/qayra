@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Save } from 'lucide-react';
+import ImageUploader from '@/components/ImageUploader';
 
 interface AdminProductEditFormProps {
   product: {
@@ -191,15 +192,11 @@ export default function AdminProductEditForm({ product }: AdminProductEditFormPr
           />
         </div>
 
-        <div className="space-y-1.5 md:col-span-2">
-          <label className="text-[#A0988E] font-medium uppercase tracking-wider">Image Path</label>
-          <input
-            type="text"
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
-            className="w-full bg-[#1A1815] border border-[#29241F] focus:border-[#D4AF37] text-xs text-[#FDFBF7] px-3 py-2.5 rounded focus:outline-none"
-          />
-        </div>
+        <ImageUploader
+          value={imageUrl}
+          onChange={setImageUrl}
+          label="Fragrance Bottle Image"
+        />
 
         <div className="flex items-center space-x-6 md:col-span-2 pt-4 border-t border-[#29241F]">
           <label className="flex items-center space-x-2 cursor-pointer">

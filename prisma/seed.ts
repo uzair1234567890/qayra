@@ -25,22 +25,22 @@ async function main() {
     console.log('Created default admin user: admin@qayra.com / admin123');
   }
 
-  // Seed sample products
+  // Seed 4 signature products matching exact uploaded bottle photos
   const sampleProducts = [
     {
-      name: 'Oud Nocturne',
-      slug: 'oud-nocturne',
+      name: 'Qayra - Shadow Elixir',
+      slug: 'shadow-elixir',
       subtitle: 'Smoked Cambodian Oud & Royal Amber',
       description: 'An evocative nocturnal composition designed for midnight drives. Rich Cambodian agarwood intertwines with glowing Baltic amber, enveloped in subtle cardamom warmth and dark leather accords.',
       scentFamily: 'Oud & Wood',
-      topNotes: 'Cardamom, Bergamot, Pink Pepper',
+      topNotes: 'Golden Saffron, Cinnamon Leaf',
       heartNotes: 'Smoked Oud, Bulgarian Rose, Saffron',
       baseNotes: 'Royal Amber, Vetiver, Dark Leather',
       intensity: 5,
-      longevity: '60 Days',
+      longevity: '40 Days',
       price: 1499,
-      originalPrice: 1999,
-      images: JSON.stringify(['/images/products/oud_nocturne.jpg']),
+      originalPrice: 1799,
+      images: JSON.stringify(['/images/products/shadow_elixir.jpg']),
       stock: 45,
       isActive: true,
       isFeatured: true,
@@ -48,19 +48,19 @@ async function main() {
       reviewsCount: 3,
     },
     {
-      name: 'Amber & Smoked Cedar',
-      slug: 'amber-smoked-cedar',
-      subtitle: 'Warm Golden Amber & Atlas Cedarwood',
+      name: 'Qayra - Velvet Midnight',
+      slug: 'velvet-midnight',
+      subtitle: 'Golden Baltic Amber & Atlas Cedarwood',
       description: 'A deeply comforting and refined scent profile that fills your vehicle cabin with golden warmth. Blends aged Atlas cedarwood with molten amber, resinous benzoin, and a whisper of clove.',
       scentFamily: 'Amber & Spice',
-      topNotes: 'Clove Bud, Sweet Orange, Nutmeg',
+      topNotes: 'Toasted Almond, Cinnamon Bark',
       heartNotes: 'Resinous Amber, Patchouli, Cashmere Wood',
       baseNotes: 'Atlas Cedarwood, Benzoin, Vanilla Bean',
       intensity: 4,
-      longevity: '45-60 Days',
-      price: 1299,
-      originalPrice: 1699,
-      images: JSON.stringify(['/images/products/amber_cedar.jpg']),
+      longevity: '40 Days',
+      price: 1499,
+      originalPrice: 1799,
+      images: JSON.stringify(['/images/products/velvet_midnight.jpg']),
       stock: 28,
       isActive: true,
       isFeatured: true,
@@ -68,8 +68,8 @@ async function main() {
       reviewsCount: 2,
     },
     {
-      name: 'Velvet Leather & Tobacco',
-      slug: 'velvet-leather-tobacco',
+      name: 'Qayra - Obsidian Mist',
+      slug: 'obsidian-mist',
       subtitle: 'Tuscan Leather & Sun-Cured Tobacco Leaf',
       description: 'Sophisticated and commanding, reminiscent of hand-stitched leather upholstery and aged oak accents. Warm tobacco blossom merges with rich leather and earthy oakmoss.',
       scentFamily: 'Leather & Smoke',
@@ -77,10 +77,10 @@ async function main() {
       heartNotes: 'Tuscan Leather, Tobacco Blossom, Iris',
       baseNotes: 'Oakmoss, Smoked Guaiacwood, Tonka Bean',
       intensity: 5,
-      longevity: '60 Days',
-      price: 1599,
+      longevity: '40 Days',
+      price: 1499,
       originalPrice: 2199,
-      images: JSON.stringify(['/images/products/leather_tobacco.jpg']),
+      images: JSON.stringify(['/images/products/obsidian_mist.jpg']),
       stock: 12,
       isActive: true,
       isFeatured: true,
@@ -88,24 +88,24 @@ async function main() {
       reviewsCount: 2,
     },
     {
-      name: 'Royal Spiced Sandalwood',
-      slug: 'royal-spiced-sandalwood',
-      subtitle: 'Mysore Sandalwood & Golden Saffron',
-      description: 'A serene and creamy wood formulation infused with rare spices. Soft Mysore sandalwood provides a relaxing sanctuary atmosphere for long journeys.',
-      scentFamily: 'Oud & Wood',
-      topNotes: 'Golden Saffron, Cinnamon Leaf',
-      heartNotes: 'Creamy Sandalwood, Cedar Leaf',
-      baseNotes: 'White Musk, Golden Amber',
+      name: 'Qayra - Sacred Nile',
+      slug: 'sacred-nile',
+      subtitle: 'Calabrian Bergamot & Sunlit Citrus Zest',
+      description: 'An invigorating, crisp, and sun-drenched olfactory creation. Handcrafted with cold-pressed Italian bergamot, neroli, and sparkling citrus zest that rejuvenates your driving mood.',
+      scentFamily: 'Fresh & Citrus',
+      topNotes: 'Calabrian Bergamot, Blood Orange, Grapefruit',
+      heartNotes: 'Neroli Blossom, White Tea, Jasmine',
+      baseNotes: 'Clean Musk, Vetiver Roots, Amberwood',
       intensity: 4,
-      longevity: '45 Days',
-      price: 1399,
-      originalPrice: 1799,
-      images: JSON.stringify(['/images/products/sandalswood.jpg']),
-      stock: 35,
+      longevity: '40 Days',
+      price: 1499,
+      originalPrice: 1899,
+      images: JSON.stringify(['/images/products/sacred_nile.jpg']),
+      stock: 40,
       isActive: true,
-      isFeatured: false,
-      rating: 4.85,
-      reviewsCount: 2,
+      isFeatured: true,
+      rating: 4.90,
+      reviewsCount: 4,
     },
   ];
 
@@ -129,7 +129,7 @@ async function main() {
             authorName: 'Vikramaditya S.',
             rating: 5,
             title: 'Exquisite vehicle scent — pure luxury',
-            comment: 'Transformed my sedan interior completely. The wood cap diffusion is subtle and never overwhelming. Lasts over two months without losing its amber depth.',
+            comment: 'Transformed my sedan interior completely. The wood cap diffusion is subtle and never overwhelming. Lasts over 40 days without losing its amber depth.',
             isVerified: true,
           },
           {
@@ -153,7 +153,7 @@ async function main() {
     }
   }
 
-  console.log('Seeded products and verified customer reviews successfully!');
+  console.log('Seeded 4 signature bottle products successfully!');
 }
 
 main()

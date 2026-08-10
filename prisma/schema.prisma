@@ -34,6 +34,11 @@ model Product {
   updatedAt     DateTime    @updatedAt
   orderItems    OrderItem[]
   reviews       Review[]
+
+  @@index([isActive, isFeatured])
+  @@index([scentFamily])
+  @@index([createdAt])
+  @@index([stock])
 }
 
 model Order {
@@ -54,6 +59,10 @@ model Order {
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
   items            OrderItem[]
+
+  @@index([paymentStatus])
+  @@index([orderStatus])
+  @@index([createdAt])
 }
 
 model OrderItem {
@@ -66,6 +75,9 @@ model OrderItem {
   productImage String
   price        Float
   quantity     Int
+
+  @@index([orderId])
+  @@index([productId])
 }
 
 model Admin {
@@ -87,4 +99,7 @@ model Review {
   comment    String
   isVerified Boolean  @default(true)
   createdAt  DateTime @default(now())
+
+  @@index([productId])
+  @@index([createdAt])
 }

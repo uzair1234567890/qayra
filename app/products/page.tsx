@@ -1,9 +1,10 @@
 import React from 'react';
-import { prisma } from '@/lib/db';
+import { getCachedProducts } from '@/lib/products';
 import ProductCard from '@/components/ProductCard';
 import ProductFilterClient from './ProductFilterClient';
+import GiftBundleSection from '@/components/GiftBundleSection';
 
-export const revalidate = 0; // Dynamic fetch for catalog filters
+export const revalidate = 60; // 60s ISR cache revalidation for optimal execution speed
 
 interface ProductsPageProps {
   searchParams: Promise<{
@@ -19,40 +20,26 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   const search = resolvedSearchParams.search;
   const sort = resolvedSearchParams.sort;
 
-  const where: any = { isActive: true };
+  // Fetch cached active products with sub-20ms RAM speed
+  const allProducts = await getCachedProducts({ isActive: true }, { createdAt: 'desc' });
 
+  // Apply server initial filter
+  let filtered = [...allProducts];
   if (family && family !== 'All') {
-    where.scentFamily = family;
+    filtered = filtered.filter((p) => p.scentFamily === family);
   }
-
   if (search) {
-    where.OR = [
-      { name: { contains: search } },
-      { description: { contains: search } },
-      { scentFamily: { contains: search } },
-      { topNotes: { contains: search } },
-    ];
+    const q = search.toLowerCase();
+    filtered = filtered.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        p.scentFamily.toLowerCase().includes(q) ||
+        (p.topNotes && p.topNotes.toLowerCase().includes(q))
+    );
   }
-
-  let orderBy: any = { createdAt: 'desc' };
-  if (sort === 'price-asc') orderBy = { price: 'asc' };
-  if (sort === 'price-desc') orderBy = { price: 'desc' };
-  if (sort === 'rating') orderBy = { rating: 'desc' };
-
-  const products = await prisma.product.findMany({
-    where,
-    orderBy,
-  });
-
-  const formattedProducts = products.map((prod) => {
-    let parsedImages = [];
-    try {
-      parsedImages = JSON.parse(prod.images);
-    } catch (e) {
-      parsedImages = [prod.images];
-    }
-    return { ...prod, images: parsedImages };
-  });
+  if (sort === 'price-asc') filtered.sort((a, b) => a.price - b.price);
+  if (sort === 'price-desc') filtered.sort((a, b) => b.price - a.price);
+  if (sort === 'rating') filtered.sort((a, b) => b.rating - a.rating);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-8 py-12 space-y-10">
@@ -65,30 +52,23 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
           Hanging Car Perfumes
         </h1>
         <p className="text-xs sm:text-sm text-[#A0988E]">
-          Explore our complete collection of handcrafted car fragrance diffusers. Concentrated oils blended for 60-day vehicle cabin diffusion.
+          Explore our complete collection of handcrafted car fragrance diffusers. Concentrated oils blended for 40-day vehicle cabin diffusion.
         </p>
       </div>
 
       {/* Interactive Filters & Search */}
       <ProductFilterClient
+        initialProducts={filtered}
+        allProducts={allProducts}
         currentFamily={family || 'All'}
         currentSort={sort || 'newest'}
         currentSearch={search || ''}
       />
 
-      {/* Products Grid */}
-      {formattedProducts.length === 0 ? (
-        <div className="text-center py-24 bg-[#141210] border border-[#29241F] rounded-xl p-8 space-y-4">
-          <p className="font-serif text-2xl text-[#FDFBF7]">No car perfumes match your search.</p>
-          <p className="text-xs text-[#787063]">Try clearing your search query or selecting another scent family.</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {formattedProducts.map((product) => (
-            <ProductCard key={product.id} {...product} />
-          ))}
-        </div>
-      )}
+      {/* Luxury Gift Bundle Offer */}
+      <div className="pt-8 border-t border-[#29241F]">
+        <GiftBundleSection />
+      </div>
     </div>
   );
 }

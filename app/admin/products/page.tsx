@@ -19,6 +19,17 @@ export default async function AdminProductsPage() {
 
   const products = await prisma.product.findMany({
     orderBy: { createdAt: 'desc' },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      scentFamily: true,
+      price: true,
+      stock: true,
+      isActive: true,
+      images: true,
+      createdAt: true,
+    },
   });
 
   const formattedProducts = products.map((prod) => {

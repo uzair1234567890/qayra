@@ -55,7 +55,7 @@ export default function ScentPyramid({ topNotes, heartNotes, baseNotes }: ScentP
         <div className="relative pl-6 border-l-2 border-[#A38220] bg-[#1A1815]/60 p-4 rounded-r-lg">
           <div className="flex items-center space-x-2 text-xs uppercase tracking-widest text-[#A38220] font-semibold">
             <ShieldCheck className="w-4 h-4 text-[#A38220]" />
-            <span>Base Notes &bull; Lasting Resonance (Up to 60 Days)</span>
+            <span>Base Notes &bull; Lasting Resonance (Up to 40 Days)</span>
           </div>
           <p className="text-sm font-serif text-[#FDFBF7] mt-1 font-medium">{baseNotes}</p>
           <p className="text-[11px] text-[#787063] mt-1">

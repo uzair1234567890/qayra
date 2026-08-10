@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { clearProductsCache } from '@/lib/products';
 
 export async function GET(request: Request) {
   try {
@@ -72,6 +73,8 @@ export async function POST(request: Request) {
         reviewsCount: totalReviewsCount,
       },
     });
+
+    clearProductsCache();
 
     return NextResponse.json({
       success: true,

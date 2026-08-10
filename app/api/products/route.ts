@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/db';
 import { getAuthenticatedAdmin } from '@/lib/auth';
+import { clearProductsCache } from '@/lib/products';
 
 export async function GET(request: Request) {
   try {
@@ -113,7 +115,7 @@ export async function POST(request: Request) {
         heartNotes: heartNotes || 'Smoked Oud, Amber',
         baseNotes: baseNotes || 'Cedarwood, Dark Leather',
         intensity: Number(intensity || 4),
-        longevity: longevity || '45-60 Days',
+        longevity: longevity || '30-40 Days',
         price: Number(price),
         originalPrice: originalPrice ? Number(originalPrice) : null,
         images: imagesJson,
@@ -122,6 +124,11 @@ export async function POST(request: Request) {
         isFeatured: isFeatured !== undefined ? Boolean(isFeatured) : false,
       },
     });
+
+    clearProductsCache();
+    revalidatePath('/');
+    revalidatePath('/products');
+    revalidatePath(`/products/${newProduct.slug}`);
 
     return NextResponse.json({ success: true, product: newProduct });
   } catch (error) {

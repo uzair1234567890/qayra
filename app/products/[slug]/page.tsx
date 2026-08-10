@@ -4,12 +4,25 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Star, ShieldCheck, Sparkles, Truck, RefreshCw } from 'lucide-react';
 import { prisma } from '@/lib/db';
+import { getCachedProductBySlug } from '@/lib/products';
 import ScentPyramid from '@/components/ScentPyramid';
 import ProductCard from '@/components/ProductCard';
 import ProductBuyActions from './ProductBuyActions';
 import ProductReviews from '@/components/ProductReviews';
 
-export const revalidate = 0; // Dynamic route for individual perfume
+export const revalidate = 60; // 60s ISR cache revalidation for instant product detail page loads
+
+export async function generateStaticParams() {
+  try {
+    const products = await prisma.product.findMany({
+      where: { isActive: true },
+      select: { slug: true },
+    });
+    return products.map((p) => ({ slug: p.slug }));
+  } catch (error) {
+    return [];
+  }
+}
 
 interface ProductDetailPageProps {
   params: Promise<{
@@ -20,53 +33,17 @@ interface ProductDetailPageProps {
 export default async function ProductDetailPage({ params }: ProductDetailPageProps) {
   const { slug } = await params;
 
-  const product = await prisma.product.findFirst({
-    where: {
-      OR: [{ slug }, { id: slug }],
-      isActive: true,
-    },
-    include: {
-      reviews: {
-        orderBy: { createdAt: 'desc' },
-      },
-    },
-  });
+  // Fetch cached product & related items with sub-20ms speed
+  const data = await getCachedProductBySlug(slug);
 
-  if (!product) {
+  if (!data || !data.product) {
     notFound();
   }
 
-  let parsedImages: string[] = [];
-  try {
-    parsedImages = JSON.parse(product.images);
-  } catch (e) {
-    parsedImages = [product.images];
-  }
-
-  const primaryImage = parsedImages[0] || '/images/products/oud_nocturne.jpg';
-
-  // Fetch 3 related products in same scent family
-  const relatedProducts = await prisma.product.findMany({
-    where: {
-      isActive: true,
-      scentFamily: product.scentFamily,
-      id: { not: product.id },
-    },
-    take: 3,
-  });
-
-  const formattedRelated = relatedProducts.map((prod) => {
-    let images = [];
-    try {
-      images = JSON.parse(prod.images);
-    } catch (e) {
-      images = [prod.images];
-    }
-    return { ...prod, images };
-  });
+  const { product, primaryImage, relatedProducts: formattedRelated } = data;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-8 py-12 space-y-16">
+    <div className="max-w-7xl mx-auto px-4 sm:px-8 py-12 pb-24 sm:pb-12 space-y-16">
       {/* Breadcrumb Navigation */}
       <nav className="text-xs uppercase tracking-widest text-[#787063] flex items-center space-x-2">
         <Link href="/" className="hover:text-[#D4AF37]">Home</Link>
@@ -170,7 +147,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
             </div>
             <div className="flex items-center space-x-2">
               <RefreshCw className="w-4 h-4 text-[#D4AF37]" />
-              <span>60-Day Fragrance Guarantee</span>
+              <span>40-Day Fragrance Guarantee</span>
             </div>
           </div>
         </div>
@@ -219,8 +196,8 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
           <h3 className="font-serif text-3xl font-bold text-[#FDFBF7]">
             Complementary Car Perfumes
           </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {formattedRelated.map((rel) => (
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-8">
+            {formattedRelated.map((rel: any) => (
               <ProductCard key={rel.id} {...rel} />
             ))}
           </div>

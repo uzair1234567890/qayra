@@ -5,7 +5,7 @@ import { prisma } from '@/lib/db';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { items, customerName, customerEmail, customerPhone, shippingAddress, city, state, pincode } = body;
+    const { items, customerName, customerEmail, customerPhone, shippingAddress, city, state, pincode, couponCode } = body;
 
     if (!items || !items.length || !customerName || !customerEmail || !customerPhone || !shippingAddress || !pincode) {
       return NextResponse.json({ error: 'Missing required order fields (Name, Email, Mobile Number, Address, or Pincode)' }, { status: 400 });
@@ -59,9 +59,20 @@ export async function POST(request: Request) {
       });
     }
 
+    // Coupon discount logic
+    let discountPct = 0;
+    if (couponCode) {
+      const normalizedCode = couponCode.trim().toUpperCase();
+      if (normalizedCode === 'ROYAL15') discountPct = 0.15;
+      if (normalizedCode === 'EXECUTIVE20') discountPct = 0.20;
+    }
+
+    const discountAmount = Math.round(totalAmount * discountPct);
+    const discountedSubtotal = Math.max(0, totalAmount - discountAmount);
+
     // Free shipping threshold ₹1499, otherwise add ₹99 shipping
-    const shippingFee = totalAmount >= 1499 ? 0 : 99;
-    const finalTotalAmount = totalAmount + shippingFee;
+    const shippingFee = discountedSubtotal >= 1499 ? 0 : 99;
+    const finalTotalAmount = discountedSubtotal + shippingFee;
 
     // Generate unique order number (e.g. QYR-839201)
     const orderNumber = `QYR-${Math.floor(100000 + Math.random() * 900000)}`;
