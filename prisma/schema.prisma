@@ -21,7 +21,7 @@ model Product {
   heartNotes    String
   baseNotes     String
   intensity     Int         @default(4) // 1-5 scale
-  longevity     String      @default("45-60 Days")
+  longevity     String      @default("40 Days")
   price         Float
   originalPrice Float?
   images        String      // JSON array of image URLs
@@ -41,9 +41,28 @@ model Product {
   @@index([stock])
 }
 
+model User {
+  id              String   @id @default(uuid())
+  email           String   @unique
+  passwordHash    String
+  name            String
+  phone           String?
+  shippingAddress String?
+  city            String?
+  state           String?
+  pincode         String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  orders          Order[]
+
+  @@index([email])
+}
+
 model Order {
   id               String      @id @default(uuid())
   orderNumber      String      @unique
+  userId           String?
+  user             User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
   customerName     String
   customerEmail    String
   customerPhone    String
@@ -60,6 +79,8 @@ model Order {
   updatedAt        DateTime    @updatedAt
   items            OrderItem[]
 
+  @@index([userId])
+  @@index([customerEmail])
   @@index([paymentStatus])
   @@index([orderStatus])
   @@index([createdAt])

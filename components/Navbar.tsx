@@ -1,13 +1,25 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { ShoppingBag, Search, ShieldCheck, Menu, X } from 'lucide-react';
+import { ShoppingBag, Search, ShieldCheck, User, Menu, X } from 'lucide-react';
 import { useCart } from './CartContext';
 
 export default function Navbar() {
   const { setIsCartOpen, totalItemsCount } = useCart();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [customer, setCustomer] = useState<any>(null);
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.user) {
+          setCustomer(data.user);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <header className="sticky top-0 z-40 w-full">
@@ -50,7 +62,20 @@ export default function Navbar() {
           </div>
 
           {/* Header Action Buttons */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3.5">
+            {/* Customer Account / Login Button */}
+            <Link
+              href={customer ? '/account' : '/login'}
+              className="flex items-center space-x-1.5 text-xs text-[#E6E1DA] hover:text-[#D4AF37] border border-[#29241F] hover:border-[#D4AF37] px-3 py-1.5 rounded transition-all bg-[#141210]/60"
+              title={customer ? `My Account (${customer.name})` : 'Customer Sign In'}
+            >
+              <User className="w-3.5 h-3.5 text-[#D4AF37]" />
+              <span className="max-w-[80px] sm:max-w-[120px] truncate font-medium">
+                {customer ? customer.name.split(' ')[0] : 'Sign In'}
+              </span>
+            </Link>
+
+            {/* Admin Portal Link */}
             <Link
               href="/admin/login"
               className="hidden sm:flex items-center space-x-1 text-xs text-[#A0988E] hover:text-[#D4AF37] border border-[#29241F] hover:border-[#D4AF37] px-3 py-1.5 rounded transition-all"
@@ -60,6 +85,7 @@ export default function Navbar() {
               <span>Admin</span>
             </Link>
 
+            {/* Cart Drawer Trigger */}
             <button
               onClick={() => setIsCartOpen(true)}
               className="relative p-2 text-[#FDFBF7] hover:text-[#D4AF37] transition-colors"
@@ -122,38 +148,32 @@ export default function Navbar() {
                   className="flex items-center justify-between p-3 bg-[#141210] border border-[#29241F] rounded-lg text-xs uppercase tracking-wider text-[#B5AC9E] active:border-[#D4AF37]"
                 >
                   <span>Leather & Smoke</span>
-                  <span className="text-[10px] bg-[#A38220]/10 text-[#A38220] px-2 py-0.5 rounded border border-[#A38220]/30 font-semibold">Rich</span>
+                  <span className="text-[10px] bg-[#E5D5B8]/10 text-[#E5D5B8] px-2 py-0.5 rounded border border-[#E5D5B8]/30 font-semibold">Intense</span>
+                </Link>
+              </div>
+
+              <div className="pt-4 border-t border-[#29241F] space-y-3">
+                <Link
+                  href={customer ? '/account' : '/login'}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-center space-x-2 w-full py-3 bg-[#1A1815] border border-[#D4AF37]/40 text-[#D4AF37] text-xs font-semibold rounded-lg"
+                >
+                  <User className="w-4 h-4" />
+                  <span>{customer ? `My Account (${customer.name})` : 'Customer Sign In'}</span>
                 </Link>
                 <Link
-                  href="/#philosophy"
+                  href="/admin/login"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-between p-3 bg-[#141210] border border-[#29241F] rounded-lg text-xs uppercase tracking-wider text-[#B5AC9E]"
+                  className="flex items-center justify-center space-x-2 w-full py-3 bg-[#141210] border border-[#29241F] text-[#A0988E] text-xs font-semibold rounded-lg"
                 >
-                  <span>Our Craft Philosophy</span>
+                  <ShieldCheck className="w-4 h-4" />
+                  <span>Admin Portal</span>
                 </Link>
               </div>
             </div>
 
-            <div className="pt-6 border-t border-[#29241F] space-y-3">
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  setIsCartOpen(true);
-                }}
-                className="w-full py-3.5 bg-gradient-to-r from-[#D4AF37] to-[#C5A059] text-[#0A0908] font-bold text-xs uppercase tracking-widest rounded flex items-center justify-center space-x-2 shadow-xl active:scale-95"
-              >
-                <ShoppingBag className="w-4 h-4" />
-                <span>View Selection ({totalItemsCount})</span>
-              </button>
-
-              <Link
-                href="/admin/login"
-                onClick={() => setMobileMenuOpen(false)}
-                className="w-full py-3 bg-[#1A1815] border border-[#29241F] text-[#A0988E] text-xs font-semibold uppercase tracking-wider rounded flex items-center justify-center space-x-2 active:border-[#D4AF37]"
-              >
-                <ShieldCheck className="w-4 h-4 text-[#D4AF37]" />
-                <span>Admin Portal</span>
-              </Link>
+            <div className="text-center text-[10px] text-[#A0988E] uppercase tracking-widest pt-6 border-t border-[#29241F] mt-6">
+              Qayra Parfums &bull; Up to 40-Day Longevity
             </div>
           </div>
         )}

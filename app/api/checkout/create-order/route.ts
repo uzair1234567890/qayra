@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import jwt from 'jsonwebtoken';
 import Razorpay from 'razorpay';
 import { prisma } from '@/lib/db';
 
@@ -106,10 +108,31 @@ export async function POST(request: Request) {
       }
     }
 
+    // Check if user account exists for this email or token
+    let userId: string | null = null;
+    try {
+      const cookieStore = await cookies();
+      const token = cookieStore.get('user_token')?.value;
+      if (token) {
+        const decoded = jwt.verify(token, process.env.ADMIN_JWT_SECRET || 'qayra_super_secret_jwt_key_2026') as { userId: string };
+        userId = decoded.userId;
+      } else {
+        const existingUser = await prisma.user.findUnique({
+          where: { email: customerEmail.trim().toLowerCase() },
+        });
+        if (existingUser) {
+          userId = existingUser.id;
+        }
+      }
+    } catch (e) {
+      // Ignore token parse errors
+    }
+
     // Save order in database with PENDING status
     const newOrder = await prisma.order.create({
       data: {
         orderNumber,
+        userId,
         customerName,
         customerEmail,
         customerPhone: customerPhone || '',
