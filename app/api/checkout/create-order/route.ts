@@ -168,8 +168,15 @@ export async function POST(request: Request) {
         })),
       };
 
-      sendCustomerOrderEmail(emailPayload).catch((e) => console.error('[COD CUSTOMER EMAIL ERROR]', e));
-      sendAdminOrderNotification(emailPayload).catch((e) => console.error('[COD ADMIN EMAIL ERROR]', e));
+      // Dispatch instant email alerts to customer and admin (umaird68uu@gmail.com)
+      try {
+        await Promise.allSettled([
+          sendCustomerOrderEmail(emailPayload),
+          sendAdminOrderNotification(emailPayload),
+        ]);
+      } catch (e) {
+        console.error('[COD EMAIL DISPATCH ERROR]', e);
+      }
 
       return NextResponse.json({
         success: true,

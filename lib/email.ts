@@ -19,7 +19,7 @@ interface OrderEmailProps {
 }
 
 function createTransporter(emailUser: string, emailPass: string) {
-  const isGmail = emailUser.includes('@gmail.com') || !process.env.EMAIL_SERVER_HOST;
+  const isGmail = emailUser.includes('@gmail.com') || !!process.env.GMAIL_USER;
 
   if (isGmail) {
     return nodemailer.createTransport({
@@ -46,6 +46,16 @@ function createTransporter(emailUser: string, emailPass: string) {
       rejectUnauthorized: false,
     },
   });
+}
+
+function getEmailCredentials() {
+  const user = process.env.GMAIL_USER || process.env.EMAIL_SERVER_USER || process.env.SMTP_USER;
+  const pass = process.env.GMAIL_APP_PASSWORD || process.env.EMAIL_SERVER_PASSWORD || process.env.SMTP_PASS;
+  
+  if (user && pass && !user.includes('example.com') && !pass.includes('password_here')) {
+    return { emailUser: user, emailPass: pass };
+  }
+  return null;
 }
 
 export async function sendCustomerOrderEmail(props: OrderEmailProps) {
@@ -133,14 +143,13 @@ export async function sendCustomerOrderEmail(props: OrderEmailProps) {
 
   console.log(`[CUSTOMER EMAIL LOG] Order confirmation for #${orderNumber} sent to ${customerEmail}`);
 
-  const emailUser = process.env.EMAIL_SERVER_USER || process.env.SMTP_USER || process.env.GMAIL_USER;
-  const emailPass = process.env.EMAIL_SERVER_PASSWORD || process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD;
+  const creds = getEmailCredentials();
 
-  if (emailUser && emailPass) {
+  if (creds) {
     try {
-      const transporter = createTransporter(emailUser, emailPass);
+      const transporter = createTransporter(creds.emailUser, creds.emailPass);
       await transporter.sendMail({
-        from: process.env.EMAIL_FROM || `"Qayra Luxury Car Perfumes" <${emailUser}>`,
+        from: process.env.EMAIL_FROM || `"Qayra Luxury Car Perfumes" <${creds.emailUser}>`,
         to: customerEmail,
         subject: `Order Confirmation #${orderNumber} - Qayra Luxury Car Fragrance`,
         html,
@@ -237,14 +246,13 @@ export async function sendAdminOrderNotification(props: OrderEmailProps) {
 
   console.log(`[ADMIN NOTIFICATION LOG] Alert for Order #${orderNumber} sent to ${adminEmail} (Mobile: ${customerPhone})`);
 
-  const emailUser = process.env.EMAIL_SERVER_USER || process.env.SMTP_USER || process.env.GMAIL_USER;
-  const emailPass = process.env.EMAIL_SERVER_PASSWORD || process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD;
+  const creds = getEmailCredentials();
 
-  if (emailUser && emailPass) {
+  if (creds) {
     try {
-      const transporter = createTransporter(emailUser, emailPass);
+      const transporter = createTransporter(creds.emailUser, creds.emailPass);
       await transporter.sendMail({
-        from: process.env.EMAIL_FROM || `"Qayra Alert System" <${emailUser}>`,
+        from: process.env.EMAIL_FROM || `"Qayra Alert System" <${creds.emailUser}>`,
         to: adminEmail,
         subject: `🚨 NEW ORDER #${orderNumber} - ${customerName} (₹${totalAmount.toLocaleString('en-IN')})`,
         html,
@@ -254,6 +262,6 @@ export async function sendAdminOrderNotification(props: OrderEmailProps) {
       console.error('[ADMIN EMAIL ERROR] Could not dispatch SMTP email:', err);
     }
   } else {
-    console.warn('[ADMIN EMAIL SKIPPED] GMAIL_USER or GMAIL_APP_PASSWORD missing in process.env');
+    console.warn('[ADMIN EMAIL SKIPPED] Missing valid GMAIL_USER or GMAIL_APP_PASSWORD credentials');
   }
 }
