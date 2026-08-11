@@ -4,11 +4,13 @@ interface OrderEmailProps {
   orderNumber: string;
   customerName: string;
   customerEmail: string;
+  customerPhone?: string;
   shippingAddress: string;
   city: string;
   state: string;
   pincode: string;
   totalAmount: number;
+  paymentMethod?: string;
   items: Array<{
     productName: string;
     quantity: number;
@@ -17,7 +19,18 @@ interface OrderEmailProps {
 }
 
 export async function sendCustomerOrderEmail(props: OrderEmailProps) {
-  const { orderNumber, customerName, customerEmail, shippingAddress, city, state, pincode, totalAmount, items } = props;
+  const {
+    orderNumber,
+    customerName,
+    customerEmail,
+    shippingAddress,
+    city,
+    state,
+    pincode,
+    totalAmount,
+    items,
+    paymentMethod = 'ONLINE',
+  } = props;
 
   const itemsHtml = items
     .map(
@@ -55,7 +68,7 @@ export async function sendCustomerOrderEmail(props: OrderEmailProps) {
             <div class="logo">QAYRA</div>
             <div style="font-size: 11px; letter-spacing: 2px; color: #8A8175; text-transform: uppercase; margin-top: 4px;">Luxury Car Fragrance</div>
             <div class="title">Thank You For Your Order</div>
-            <div class="order-badge">Order #${orderNumber}</div>
+            <div class="order-badge">Order #${orderNumber} (${paymentMethod === 'COD' ? 'Cash on Delivery' : 'Prepaid'})</div>
           </div>
 
           <p style="color: #D6D0C7; font-size: 15px;">Dear ${customerName},</p>
@@ -67,7 +80,7 @@ export async function sendCustomerOrderEmail(props: OrderEmailProps) {
           <table>
             ${itemsHtml}
             <tr class="total-row">
-              <td>Total Amount Paid</td>
+              <td>Total Amount Payable</td>
               <td style="text-align: right;">₹${totalAmount.toLocaleString('en-IN')}</td>
             </tr>
           </table>
@@ -81,40 +94,149 @@ export async function sendCustomerOrderEmail(props: OrderEmailProps) {
 
           <div class="footer">
             Qayra Luxury Car Perfumes &bull; Crafted for the Discerning Drive<br>
-            For inquiries, contact support@qayra.com
+            For inquiries, contact support@qayra.in
           </div>
         </div>
       </body>
     </html>
   `;
 
-  // Log in dev environment or send real email if SMTP is configured
-  console.log(`[EMAIL DISPATCH] Sent order confirmation for #${orderNumber} to ${customerEmail}`);
+  console.log(`[CUSTOMER EMAIL LOG] Order confirmation for #${orderNumber} sent to ${customerEmail}`);
 
-  if (process.env.EMAIL_SERVER_HOST && process.env.EMAIL_SERVER_USER) {
+  // Dispatch via Nodemailer if SMTP is configured
+  const emailHost = process.env.EMAIL_SERVER_HOST || process.env.SMTP_HOST;
+  const emailUser = process.env.EMAIL_SERVER_USER || process.env.SMTP_USER || process.env.GMAIL_USER;
+  const emailPass = process.env.EMAIL_SERVER_PASSWORD || process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD;
+
+  if (emailHost && emailUser && emailPass) {
     try {
       const transporter = nodemailer.createTransport({
-        host: process.env.EMAIL_SERVER_HOST,
+        host: emailHost,
         port: Number(process.env.EMAIL_SERVER_PORT || 587),
-        auth: {
-          user: process.env.EMAIL_SERVER_USER,
-          pass: process.env.EMAIL_SERVER_PASSWORD,
-        },
+        secure: Number(process.env.EMAIL_SERVER_PORT) === 465,
+        auth: { user: emailUser, pass: emailPass },
       });
 
       await transporter.sendMail({
-        from: process.env.EMAIL_FROM || '"Qayra Perfumes" <orders@qayra.com>',
+        from: process.env.EMAIL_FROM || '"Qayra Luxury Car Perfumes" <orders@qayra.in>',
         to: customerEmail,
         subject: `Order Confirmation #${orderNumber} - Qayra Luxury Car Fragrance`,
         html,
       });
     } catch (err) {
-      console.error('[EMAIL ERROR] Failed to dispatch Nodemailer email:', err);
+      console.error('[CUSTOMER EMAIL ERROR]', err);
     }
   }
 }
 
 export async function sendAdminOrderNotification(props: OrderEmailProps) {
-  const adminEmail = process.env.ADMIN_EMAIL || 'admin@qayra.com';
-  console.log(`[ADMIN ALERT] New order #${props.orderNumber} placed by ${props.customerName} (₹${props.totalAmount}) -> ${adminEmail}`);
+  const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || 'umaird68uu@gmail.com';
+  const {
+    orderNumber,
+    customerName,
+    customerEmail,
+    customerPhone = 'N/A',
+    shippingAddress,
+    city,
+    state,
+    pincode,
+    totalAmount,
+    paymentMethod = 'ONLINE',
+    items,
+  } = props;
+
+  const itemsHtml = items
+    .map(
+      (item) => `
+      <tr>
+        <td style="padding: 10px 0; border-bottom: 1px solid #2C2723; color: #FDFBF7;">${item.productName} (x${item.quantity})</td>
+        <td style="padding: 10px 0; border-bottom: 1px solid #2C2723; color: #D4AF37; text-align: right;">₹${(item.price * item.quantity).toLocaleString('en-IN')}</td>
+      </tr>
+    `
+    )
+    .join('');
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: Arial, sans-serif; background-color: #0F0E0D; color: #FDFBF7; margin: 0; padding: 20px; }
+          .container { max-width: 600px; margin: 0 auto; background: #181614; border: 1px solid #D4AF37; border-radius: 10px; padding: 25px; }
+          .header { text-align: center; border-bottom: 1px solid #2C2723; padding-bottom: 15px; margin-bottom: 20px; }
+          .badge { background: #D4AF37; color: #0A0908; font-weight: bold; padding: 6px 12px; border-radius: 4px; font-size: 12px; text-transform: uppercase; }
+          .section { margin-top: 20px; background: #1F1C19; padding: 15px; border-radius: 8px; border: 1px solid #2C2723; }
+          .label { color: #A0988E; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+          .val { color: #FDFBF7; font-size: 14px; font-weight: bold; margin-top: 4px; }
+          .btn { display: inline-block; background: #D4AF37; color: #0A0908; padding: 12px 24px; text-decoration: none; font-weight: bold; border-radius: 6px; margin-top: 20px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <span class="badge">🔥 NEW ORDER ALERT: #${orderNumber}</span>
+            <h2 style="color: #D4AF37; margin-top: 15px; font-size: 22px;">New Qayra Order Received!</h2>
+            <p style="color: #A0988E; font-size: 13px;">Payment Method: <strong>${paymentMethod === 'COD' ? '💵 Cash on Delivery (COD)' : '💳 Prepaid (Online)'}</strong></p>
+          </div>
+
+          <div class="section">
+            <div class="label">Customer Information</div>
+            <div class="val">${customerName}</div>
+            <p style="margin: 4px 0 0 0; color: #D4AF37; font-size: 13px;">📱 Mobile: <strong>${customerPhone}</strong></p>
+            <p style="margin: 4px 0 0 0; color: #A0988E; font-size: 13px;">✉️ Email: ${customerEmail}</p>
+          </div>
+
+          <div class="section">
+            <div class="label">Shipping Address</div>
+            <div class="val">${shippingAddress}</div>
+            <p style="margin: 4px 0 0 0; color: #A0988E; font-size: 13px;">${city}, ${state} - ${pincode}</p>
+          </div>
+
+          <div class="section">
+            <div class="label">Purchased Items</div>
+            <table style="width: 100%; margin-top: 10px;">
+              ${itemsHtml}
+              <tr>
+                <td style="padding-top: 12px; font-weight: bold; color: #FDFBF7;">Total Amount</td>
+                <td style="padding-top: 12px; font-weight: bold; color: #D4AF37; text-align: right; font-size: 18px;">₹${totalAmount.toLocaleString('en-IN')}</td>
+              </tr>
+            </table>
+          </div>
+
+          <div style="text-align: center;">
+            <a href="https://qayra.in/admin/orders" class="btn">Open Admin Dashboard</a>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+
+  console.log(`[ADMIN NOTIFICATION LOG] Alert for Order #${orderNumber} sent to ${adminEmail} (Mobile: ${customerPhone})`);
+
+  // Dispatch via Nodemailer if SMTP credentials exist
+  const emailHost = process.env.EMAIL_SERVER_HOST || process.env.SMTP_HOST || 'smtp.gmail.com';
+  const emailUser = process.env.EMAIL_SERVER_USER || process.env.SMTP_USER || process.env.GMAIL_USER;
+  const emailPass = process.env.EMAIL_SERVER_PASSWORD || process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD;
+
+  if (emailUser && emailPass) {
+    try {
+      const transporter = nodemailer.createTransport({
+        host: emailHost,
+        port: Number(process.env.EMAIL_SERVER_PORT || 587),
+        secure: Number(process.env.EMAIL_SERVER_PORT) === 465,
+        auth: { user: emailUser, pass: emailPass },
+      });
+
+      await transporter.sendMail({
+        from: process.env.EMAIL_FROM || '"Qayra Alert System" <notifications@qayra.in>',
+        to: adminEmail,
+        subject: `🚨 NEW ORDER #${orderNumber} - ${customerName} (₹${totalAmount.toLocaleString('en-IN')})`,
+        html,
+      });
+      console.log(`[ADMIN EMAIL DISPATCHED SUCCESS] Sent to ${adminEmail}`);
+    } catch (err) {
+      console.error('[ADMIN EMAIL ERROR] Could not dispatch SMTP email:', err);
+    }
+  }
 }

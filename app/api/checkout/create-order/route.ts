@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import jwt from 'jsonwebtoken';
 import Razorpay from 'razorpay';
 import { prisma } from '@/lib/db';
+import { sendCustomerOrderEmail, sendAdminOrderNotification } from '@/lib/email';
 
 export async function POST(request: Request) {
   try {
@@ -147,6 +148,28 @@ export async function POST(request: Request) {
           data: { stock: { decrement: item.quantity } },
         });
       }
+
+      // Dispatch instant email alerts to customer and admin (umaird68uu@gmail.com)
+      const emailPayload = {
+        orderNumber: newOrder.orderNumber,
+        customerName: newOrder.customerName,
+        customerEmail: newOrder.customerEmail,
+        customerPhone: newOrder.customerPhone,
+        shippingAddress: newOrder.shippingAddress,
+        city: newOrder.city,
+        state: newOrder.state,
+        pincode: newOrder.pincode,
+        totalAmount: newOrder.totalAmount,
+        paymentMethod: 'COD',
+        items: newOrder.items.map((i) => ({
+          productName: i.productName,
+          quantity: i.quantity,
+          price: i.price,
+        })),
+      };
+
+      sendCustomerOrderEmail(emailPayload).catch((e) => console.error('[COD CUSTOMER EMAIL ERROR]', e));
+      sendAdminOrderNotification(emailPayload).catch((e) => console.error('[COD ADMIN EMAIL ERROR]', e));
 
       return NextResponse.json({
         success: true,
