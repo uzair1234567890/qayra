@@ -71,7 +71,8 @@ model Order {
   state            String
   pincode          String
   totalAmount      Float
-  paymentStatus    String      @default("PENDING") // PENDING, PAID, FAILED
+  paymentMethod    String      @default("ONLINE") // ONLINE, COD
+  paymentStatus    String      @default("PENDING") // PENDING, PAID, FAILED, COD_PENDING
   orderStatus      String      @default("PENDING") // PENDING, PROCESSING, SHIPPED, DELIVERED, CANCELLED
   razorpayOrderId  String?
   razorpayPaymentId String?

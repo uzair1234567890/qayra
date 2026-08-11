@@ -101,10 +101,18 @@ export default async function OrderPage({ params }: OrderPageProps) {
             </p>
           </div>
 
-          <div className="flex items-center space-x-2">
-            <span className="text-xs uppercase tracking-widest text-[#A0988E]">Payment Status:</span>
-            <span className={`px-3 py-1 rounded text-xs font-bold uppercase tracking-wider ${isPaid ? 'bg-[#2A9D8F]/10 border border-[#2A9D8F]/40 text-[#2A9D8F]' : 'bg-[#E69A28]/10 border border-[#E69A28]/40 text-[#E69A28]'}`}>
-              {order.paymentStatus}
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="px-3 py-1 rounded text-xs font-bold uppercase tracking-wider bg-[#D4AF37]/10 border border-[#D4AF37]/40 text-[#D4AF37]">
+              {order.paymentMethod === 'COD' ? '💵 Cash on Delivery' : '💳 Online Payment'}
+            </span>
+            <span className={`px-3 py-1 rounded text-xs font-bold uppercase tracking-wider ${
+              isPaid
+                ? 'bg-[#2A9D8F]/10 border border-[#2A9D8F]/40 text-[#2A9D8F]'
+                : order.paymentMethod === 'COD'
+                ? 'bg-[#52B788]/10 border border-[#52B788]/40 text-[#52B788]'
+                : 'bg-[#E69A28]/10 border border-[#E69A28]/40 text-[#E69A28]'
+            }`}>
+              {order.paymentMethod === 'COD' ? 'Pay Cash on Arrival' : order.paymentStatus}
             </span>
           </div>
         </div>

@@ -7,10 +7,24 @@ import { prisma } from '@/lib/db';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { items, customerName, customerEmail, customerPhone, shippingAddress, city, state, pincode, couponCode } = body;
+    const {
+      items,
+      customerName,
+      customerEmail,
+      customerPhone,
+      shippingAddress,
+      city,
+      state,
+      pincode,
+      couponCode,
+      paymentMethod = 'ONLINE', // 'ONLINE' | 'COD'
+    } = body;
 
     if (!items || !items.length || !customerName || !customerEmail || !customerPhone || !shippingAddress || !pincode) {
-      return NextResponse.json({ error: 'Missing required order fields (Name, Email, Mobile Number, Address, or Pincode)' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Missing required order fields (Name, Email, Mobile Number, Address, or Pincode)' },
+        { status: 400 }
+      );
     }
 
     // Validate cart products and re-calculate actual total price against DB prices
@@ -49,14 +63,14 @@ export async function POST(request: Request) {
         parsedImages = [dbProduct.images];
       }
 
-      const itemTotal = dbProduct.price * item.quantity;
-      totalAmount += itemTotal;
+      const itemPrice = dbProduct.price;
+      totalAmount += itemPrice * item.quantity;
 
       verifiedOrderItems.push({
         productId: dbProduct.id,
         productName: dbProduct.name,
-        productImage: parsedImages[0] || '/images/products/oud_nocturne.jpg',
-        price: dbProduct.price,
+        productImage: parsedImages[0] || '/images/products/shadow_elixir.jpg',
+        price: itemPrice,
         quantity: item.quantity,
       });
     }
@@ -72,16 +86,77 @@ export async function POST(request: Request) {
     const discountAmount = Math.round(totalAmount * discountPct);
     const discountedSubtotal = Math.max(0, totalAmount - discountAmount);
 
-    // Free shipping threshold ₹1499, otherwise add ₹99 shipping
-    const shippingFee = discountedSubtotal >= 1499 ? 0 : 99;
-    const finalTotalAmount = discountedSubtotal + shippingFee;
+    // Delivery is 100% FREE for all orders (Prepaid & COD)
+    const shippingFee = 0;
+    const finalTotalAmount = discountedSubtotal;
 
     // Generate unique order number (e.g. QYR-839201)
     const orderNumber = `QYR-${Math.floor(100000 + Math.random() * 900000)}`;
 
-    let razorpayOrderId = `order_mock_${orderNumber}_${Date.now()}`;
+    // Check if user account exists for this email or token
+    let userId: string | null = null;
+    try {
+      const cookieStore = await cookies();
+      const token = cookieStore.get('user_token')?.value;
+      if (token) {
+        const decoded = jwt.verify(token, process.env.ADMIN_JWT_SECRET || 'qayra_super_secret_jwt_key_2026') as { userId: string };
+        userId = decoded.userId;
+      } else {
+        const existingUser = await prisma.user.findUnique({
+          where: { email: customerEmail.trim().toLowerCase() },
+        });
+        if (existingUser) {
+          userId = existingUser.id;
+        }
+      }
+    } catch (e) {
+      // Ignore token parse errors
+    }
 
-    // Initialize Razorpay SDK if valid key is available
+    // Handle Cash on Delivery (COD)
+    if (paymentMethod === 'COD') {
+      const newOrder = await prisma.order.create({
+        data: {
+          orderNumber,
+          userId,
+          customerName,
+          customerEmail,
+          customerPhone: customerPhone || '',
+          shippingAddress,
+          city: city || 'City',
+          state: state || 'State',
+          pincode,
+          totalAmount: finalTotalAmount,
+          paymentMethod: 'COD',
+          paymentStatus: 'COD_PENDING',
+          orderStatus: 'PROCESSING',
+          razorpayOrderId: null,
+          items: {
+            create: verifiedOrderItems,
+          },
+        },
+        include: {
+          items: true,
+        },
+      });
+
+      // Decrement product stock immediately for COD order
+      for (const item of verifiedOrderItems) {
+        await prisma.product.update({
+          where: { id: item.productId },
+          data: { stock: { decrement: item.quantity } },
+        });
+      }
+
+      return NextResponse.json({
+        success: true,
+        order: newOrder,
+        isCOD: true,
+      });
+    }
+
+    // Handle Online / Razorpay Payment
+    let razorpayOrderId = `order_mock_${orderNumber}_${Date.now()}`;
     const keyId = process.env.RAZORPAY_KEY_ID;
     const keySecret = process.env.RAZORPAY_KEY_SECRET;
 
@@ -108,27 +183,7 @@ export async function POST(request: Request) {
       }
     }
 
-    // Check if user account exists for this email or token
-    let userId: string | null = null;
-    try {
-      const cookieStore = await cookies();
-      const token = cookieStore.get('user_token')?.value;
-      if (token) {
-        const decoded = jwt.verify(token, process.env.ADMIN_JWT_SECRET || 'qayra_super_secret_jwt_key_2026') as { userId: string };
-        userId = decoded.userId;
-      } else {
-        const existingUser = await prisma.user.findUnique({
-          where: { email: customerEmail.trim().toLowerCase() },
-        });
-        if (existingUser) {
-          userId = existingUser.id;
-        }
-      }
-    } catch (e) {
-      // Ignore token parse errors
-    }
-
-    // Save order in database with PENDING status
+    // Save order in database with PENDING status for Online payment
     const newOrder = await prisma.order.create({
       data: {
         orderNumber,
@@ -141,6 +196,7 @@ export async function POST(request: Request) {
         state: state || 'State',
         pincode,
         totalAmount: finalTotalAmount,
+        paymentMethod: 'ONLINE',
         paymentStatus: 'PENDING',
         orderStatus: 'PENDING',
         razorpayOrderId,
