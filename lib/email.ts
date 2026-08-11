@@ -18,6 +18,36 @@ interface OrderEmailProps {
   }>;
 }
 
+function createTransporter(emailUser: string, emailPass: string) {
+  const isGmail = emailUser.includes('@gmail.com') || !process.env.EMAIL_SERVER_HOST;
+
+  if (isGmail) {
+    return nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: emailUser,
+        pass: emailPass.replace(/\s+/g, ''), // strip any spaces from 16-char app password
+      },
+    });
+  }
+
+  const host = process.env.EMAIL_SERVER_HOST || process.env.SMTP_HOST || 'smtp.gmail.com';
+  const port = Number(process.env.EMAIL_SERVER_PORT || 587);
+
+  return nodemailer.createTransport({
+    host,
+    port,
+    secure: port === 465,
+    auth: {
+      user: emailUser,
+      pass: emailPass.replace(/\s+/g, ''),
+    },
+    tls: {
+      rejectUnauthorized: false,
+    },
+  });
+}
+
 export async function sendCustomerOrderEmail(props: OrderEmailProps) {
   const {
     orderNumber,
@@ -103,26 +133,19 @@ export async function sendCustomerOrderEmail(props: OrderEmailProps) {
 
   console.log(`[CUSTOMER EMAIL LOG] Order confirmation for #${orderNumber} sent to ${customerEmail}`);
 
-  // Dispatch via Nodemailer if SMTP is configured
-  const emailHost = process.env.EMAIL_SERVER_HOST || process.env.SMTP_HOST;
   const emailUser = process.env.EMAIL_SERVER_USER || process.env.SMTP_USER || process.env.GMAIL_USER;
   const emailPass = process.env.EMAIL_SERVER_PASSWORD || process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD;
 
-  if (emailHost && emailUser && emailPass) {
+  if (emailUser && emailPass) {
     try {
-      const transporter = nodemailer.createTransport({
-        host: emailHost,
-        port: Number(process.env.EMAIL_SERVER_PORT || 587),
-        secure: Number(process.env.EMAIL_SERVER_PORT) === 465,
-        auth: { user: emailUser, pass: emailPass },
-      });
-
+      const transporter = createTransporter(emailUser, emailPass);
       await transporter.sendMail({
-        from: process.env.EMAIL_FROM || '"Qayra Luxury Car Perfumes" <orders@qayra.in>',
+        from: process.env.EMAIL_FROM || `"Qayra Luxury Car Perfumes" <${emailUser}>`,
         to: customerEmail,
         subject: `Order Confirmation #${orderNumber} - Qayra Luxury Car Fragrance`,
         html,
       });
+      console.log(`[CUSTOMER EMAIL SUCCESS] Dispatched to ${customerEmail}`);
     } catch (err) {
       console.error('[CUSTOMER EMAIL ERROR]', err);
     }
@@ -214,22 +237,14 @@ export async function sendAdminOrderNotification(props: OrderEmailProps) {
 
   console.log(`[ADMIN NOTIFICATION LOG] Alert for Order #${orderNumber} sent to ${adminEmail} (Mobile: ${customerPhone})`);
 
-  // Dispatch via Nodemailer if SMTP credentials exist
-  const emailHost = process.env.EMAIL_SERVER_HOST || process.env.SMTP_HOST || 'smtp.gmail.com';
   const emailUser = process.env.EMAIL_SERVER_USER || process.env.SMTP_USER || process.env.GMAIL_USER;
   const emailPass = process.env.EMAIL_SERVER_PASSWORD || process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD;
 
   if (emailUser && emailPass) {
     try {
-      const transporter = nodemailer.createTransport({
-        host: emailHost,
-        port: Number(process.env.EMAIL_SERVER_PORT || 587),
-        secure: Number(process.env.EMAIL_SERVER_PORT) === 465,
-        auth: { user: emailUser, pass: emailPass },
-      });
-
+      const transporter = createTransporter(emailUser, emailPass);
       await transporter.sendMail({
-        from: process.env.EMAIL_FROM || '"Qayra Alert System" <notifications@qayra.in>',
+        from: process.env.EMAIL_FROM || `"Qayra Alert System" <${emailUser}>`,
         to: adminEmail,
         subject: `🚨 NEW ORDER #${orderNumber} - ${customerName} (₹${totalAmount.toLocaleString('en-IN')})`,
         html,
@@ -238,5 +253,7 @@ export async function sendAdminOrderNotification(props: OrderEmailProps) {
     } catch (err) {
       console.error('[ADMIN EMAIL ERROR] Could not dispatch SMTP email:', err);
     }
+  } else {
+    console.warn('[ADMIN EMAIL SKIPPED] GMAIL_USER or GMAIL_APP_PASSWORD missing in process.env');
   }
 }
