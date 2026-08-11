@@ -430,7 +430,7 @@ export default function CheckoutPage() {
               </div>
 
               {/* Order Submission Button */}
-              <div className="pt-4 space-y-3">
+              <div className="pt-4">
                 <button
                   type="submit"
                   disabled={loading}
@@ -445,18 +445,6 @@ export default function CheckoutPage() {
                       : `Pay Online (₹${totalAmount.toLocaleString('en-IN')})`}
                   </span>
                 </button>
-
-                {/* Offline / Developer Mode Simulator Button */}
-                {paymentMethod === 'ONLINE' && (
-                  <button
-                    type="button"
-                    onClick={(e) => handleCheckoutSubmit(e, true)}
-                    disabled={loading}
-                    className="w-full py-2.5 bg-[#1A1815] border border-[#29241F] text-[#787063] hover:text-[#D4AF37] text-[11px] font-semibold rounded-lg transition-all"
-                  >
-                    Test Order Simulator (Dev Mode Bypass)
-                  </button>
-                )}
               </div>
             </div>
           </form>
