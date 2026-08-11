@@ -54,10 +54,10 @@ export default function Footer() {
           </div>
           <div>
             <h4 className="text-sm font-serif font-semibold text-[#FDFBF7] uppercase tracking-wider">
-              Complimentary Shipping
+              Free Express Delivery
             </h4>
             <p className="text-xs text-[#787063] mt-1 leading-relaxed">
-              Direct express delivery across all pin-codes in India on orders over ₹1,499.
+              100% free express delivery across all pin-codes in India on every order.
             </p>
           </div>
         </div>

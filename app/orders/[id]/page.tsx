@@ -156,11 +156,11 @@ export default async function OrderPage({ params }: OrderPageProps) {
             </span>
             <div className="flex justify-between text-[#A0988E]">
               <span>Subtotal</span>
-              <span className="text-[#FDFBF7]">₹{order.totalAmount >= 1499 ? order.totalAmount.toLocaleString('en-IN') : (order.totalAmount - 99).toLocaleString('en-IN')}</span>
+              <span className="text-[#FDFBF7]">₹{order.totalAmount.toLocaleString('en-IN')}</span>
             </div>
-            <div className="flex justify-between text-[#A0988E]">
+            <div className="flex justify-between text-[#52B788] font-medium">
               <span>Express Delivery</span>
-              <span className="text-[#D4AF37]">{order.totalAmount >= 1499 ? 'FREE' : '₹99'}</span>
+              <span>FREE</span>
             </div>
             <div className="flex justify-between font-serif text-base font-bold text-[#FDFBF7] pt-2 border-t border-[#29241F]">
               <span>Total Paid</span>

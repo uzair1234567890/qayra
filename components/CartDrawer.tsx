@@ -42,23 +42,18 @@ export default function CartDrawer() {
             </button>
           </div>
 
-          {/* Free Shipping Progress Indicator */}
+          {/* Free Shipping Indicator */}
           <div className="bg-[#1A1815] p-4 border-b border-[#29241F] text-xs">
             <div className="flex items-center justify-between text-[#B5AC9E] mb-2">
               <span className="flex items-center gap-1.5 font-medium">
                 <Truck className="w-4 h-4 text-[#D4AF37]" />
-                {remainingForFreeShipping <= 0 ? (
-                  <span className="text-[#D4AF37] font-semibold">Unlocked Free Express Shipping!</span>
-                ) : (
-                  <span>Add ₹{remainingForFreeShipping.toLocaleString('en-IN')} for Free Express Delivery</span>
-                )}
+                <span className="text-[#D4AF37] font-semibold">Unlocked Free Express Delivery Across India!</span>
               </span>
-              <span>{Math.round(progressPercent)}%</span>
+              <span className="text-[#52B788] font-bold">100%</span>
             </div>
             <div className="w-full bg-[#29241F] h-1.5 rounded-full overflow-hidden">
               <div
-                className="bg-gradient-to-r from-[#C5A059] to-[#D4AF37] h-full transition-all duration-500"
-                style={{ width: `${progressPercent}%` }}
+                className="bg-gradient-to-r from-[#C5A059] to-[#D4AF37] h-full w-full"
               />
             </div>
           </div>
