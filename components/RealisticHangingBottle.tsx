@@ -15,6 +15,7 @@ export default function RealisticHangingBottle() {
   });
 
   const [renderAngle, setRenderAngle] = useState(0);
+  const [floatY, setFloatY] = useState(0);
 
   useEffect(() => {
     let animId: number;
@@ -25,10 +26,10 @@ export default function RealisticHangingBottle() {
       const dt = Math.max(1, now - physics.current.lastMoveTime);
       const deltaX = e.clientX - physics.current.prevMouseX;
 
-      // Mouse speed adds dynamic swing momentum
+      // Mouse movement subtle momentum impulse
       const mouseSpeed = deltaX / dt;
       if (Math.abs(mouseSpeed) > 0.05) {
-        physics.current.angularVelocity += mouseSpeed * 0.35;
+        physics.current.angularVelocity += mouseSpeed * 0.08;
       }
 
       physics.current.prevMouseX = e.clientX;
@@ -39,7 +40,7 @@ export default function RealisticHangingBottle() {
       if (e.touches.length > 0) {
         const clientX = e.touches[0].clientX;
         const deltaX = clientX - physics.current.prevMouseX;
-        physics.current.angularVelocity += deltaX * 0.08;
+        physics.current.angularVelocity += deltaX * 0.04;
         physics.current.prevMouseX = clientX;
       }
     };
@@ -47,23 +48,27 @@ export default function RealisticHangingBottle() {
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('touchmove', handleTouchMove);
 
-    // Continuous Harmonic Pendulum Simulation Loop
+    // Continuous Harmonic Micro-Pendulum & Vertical Breathing Loop
     const updatePhysics = () => {
-      time += 0.035;
+      time += 0.025;
 
-      // 1. Continuous smooth idle pendulum sway (-10deg to +10deg)
-      const continuousSway = Math.sin(time * 1.6) * 10;
+      // 1. Natural subtle continuous sway (-3.5deg to +3.5deg)
+      const continuousSway = Math.sin(time * 1.4) * 3.5;
 
-      // 2. Physics restoration force & air damping for mouse impulses
-      const gravityForce = -0.05 * physics.current.angle;
-      const damping = 0.96;
+      // 2. Vertical floating breathing effect (-5px to +5px)
+      const continuousFloat = Math.sin(time * 1.8) * 5;
+      setFloatY(continuousFloat);
+
+      // 3. Restoring force & air damping for smooth mouse impulses
+      const gravityForce = -0.06 * physics.current.angle;
+      const damping = 0.94;
 
       physics.current.angularVelocity += gravityForce;
       physics.current.angularVelocity *= damping;
       physics.current.angle += physics.current.angularVelocity;
 
-      // Clamp mouse impulse swing to max bounds (-20deg to +20deg)
-      physics.current.angle = Math.max(-20, Math.min(20, physics.current.angle));
+      // Gentle bounds for natural vehicle hanging bottle motion (-6deg to +6deg)
+      physics.current.angle = Math.max(-6, Math.min(6, physics.current.angle));
 
       const totalAngle = physics.current.angle + continuousSway;
       setRenderAngle(totalAngle);
@@ -85,44 +90,43 @@ export default function RealisticHangingBottle() {
       ref={containerRef}
       className="relative w-full h-full flex flex-col items-center justify-start select-none pointer-events-none"
     >
-      {/* Real Hanging Cord & Cutout Bottle Wrapper with Pendulum Pivot at Top Header Anchor */}
+      {/* Hanging Braided Cord & Real Bottle with Natural Pendulum Pivot */}
       <div
         className="relative flex flex-col items-center transition-transform duration-75 ease-out"
         style={{
           transformOrigin: 'top center',
-          transform: `rotate(${renderAngle}deg) translateZ(0)`,
+          transform: `rotate(${renderAngle}deg) translateY(${floatY}px) translateZ(0)`,
         }}
       >
-        {/* Rearview Mirror Anchor Ring */}
-        <div className="w-6 h-6 rounded-full border-3 border-[#D4AF37] bg-[#1A1815] shadow-2xl -mt-3 z-30 flex items-center justify-center">
-          <div className="w-2.5 h-2.5 rounded-full bg-[#D4AF37] shadow-inner" />
+        {/* Rearview Mirror Gold Anchor Ring */}
+        <div className="w-5 h-5 rounded-full border-2 border-[#D4AF37] bg-[#1A1815] shadow-2xl -mt-2 z-30 flex items-center justify-center">
+          <div className="w-2 h-2 rounded-full bg-[#D4AF37] shadow-inner" />
         </div>
 
-        {/* Thick Braided Metallic Gold Hanging Cord */}
-        <div className="w-1.5 h-44 sm:h-60 bg-gradient-to-b from-[#D4AF37] via-[#F5E6B4] to-[#8C6D27] shadow-[0_10px_25px_rgba(212,175,55,0.4)] z-20 relative rounded-full">
-          {/* Braided Cord Texture Overlay */}
-          <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,transparent,transparent_2px,rgba(0,0,0,0.4)_2px,rgba(0,0,0,0.4)_4px)] rounded-full" />
-          
-          {/* Gold Cord Knot Accent */}
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-4 rounded-md bg-[#D4AF37] border-2 border-[#8C6D27] shadow-md" />
+        {/* Premium Braided Metallic Gold Cord */}
+        <div className="w-1.5 h-36 sm:h-48 bg-gradient-to-b from-[#D4AF37] via-[#F5E6B4] to-[#8C6D27] shadow-[0_8px_20px_rgba(212,175,55,0.3)] z-20 relative rounded-full">
+          {/* Braided Cord Crosshatch Overlay */}
+          <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,transparent,transparent_2px,rgba(0,0,0,0.35)_2px,rgba(0,0,0,0.35)_4px)] rounded-full" />
+
+          {/* Gold Knot Accent */}
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded bg-[#D4AF37] border border-[#8C6D27] shadow-md" />
         </div>
 
-        {/* Pure 3D Cutout Perfume Bottle Component (NO Square Frame!) */}
-        <div className="relative z-10 -mt-2">
-          {/* Wooden Cap Vapor Diffusion Glow */}
-          <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-28 h-28 bg-[#D4AF37]/30 rounded-full blur-2xl animate-pulse pointer-events-none" />
+        {/* Real HD Cutout Bottle */}
+        <div className="relative z-10 -mt-1">
+          {/* Warm Ambient Gold Backlight Glow */}
+          <div className="absolute -top-6 left-1/2 -translate-x-1/2 w-36 h-36 bg-[#D4AF37]/25 rounded-full blur-3xl animate-pulse pointer-events-none" />
 
-          {/* Large Cutout Glass Bottle */}
           <CutoutPerfumeBottle tiltAngle={renderAngle} />
         </div>
       </div>
 
-      {/* Dynamic Damped Floor Shadow scaling synchronously with continuous swing */}
+      {/* Dynamic Ambient Floor Shadow */}
       <div
-        className="w-48 sm:w-64 h-5 rounded-full bg-[#000000]/95 blur-xl transition-transform duration-75 mt-4"
+        className="w-40 sm:w-56 h-4 rounded-full bg-[#000000]/90 blur-xl transition-transform duration-75 mt-2"
         style={{
-          transform: `translateX(${renderAngle * 4.5}px) scaleX(${1 - Math.abs(renderAngle) * 0.012})`,
-          opacity: 0.85 - Math.abs(renderAngle) * 0.01,
+          transform: `translateX(${renderAngle * 2.5}px) scaleX(${1 - Math.abs(renderAngle) * 0.01})`,
+          opacity: 0.8 - Math.abs(renderAngle) * 0.01,
         }}
       />
     </div>
