@@ -9,6 +9,7 @@ export default function Navbar() {
   const { setIsCartOpen, totalItemsCount } = useCart();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [customer, setCustomer] = useState<any>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     fetch('/api/auth/me')
@@ -16,6 +17,9 @@ export default function Navbar() {
       .then((data) => {
         if (data.user) {
           setCustomer(data.user);
+        }
+        if (data.isAdmin) {
+          setIsAdmin(true);
         }
       })
       .catch(() => {});
@@ -75,15 +79,17 @@ export default function Navbar() {
               </span>
             </Link>
 
-            {/* Admin Portal Link */}
-            <Link
-              href="/admin/login"
-              className="hidden sm:flex items-center space-x-1 text-xs text-[#A0988E] hover:text-[#D4AF37] border border-[#29241F] hover:border-[#D4AF37] px-3 py-1.5 rounded transition-all"
-              title="Admin Portal"
-            >
-              <ShieldCheck className="w-3.5 h-3.5" />
-              <span>Admin</span>
-            </Link>
+            {/* Admin Portal Link (Visible only to admin user umairuzair) */}
+            {isAdmin && (
+              <Link
+                href="/admin"
+                className="hidden sm:flex items-center space-x-1 text-xs text-[#D4AF37] hover:text-[#FDFBF7] border border-[#D4AF37]/50 hover:border-[#D4AF37] px-3 py-1.5 rounded transition-all bg-[#D4AF37]/10"
+                title="Admin Portal"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <span className="font-semibold">Admin</span>
+              </Link>
+            )}
 
             {/* Cart Drawer Trigger */}
             <button
@@ -161,14 +167,16 @@ export default function Navbar() {
                   <User className="w-4 h-4" />
                   <span>{customer ? `My Account (${customer.name})` : 'Customer Sign In'}</span>
                 </Link>
-                <Link
-                  href="/admin/login"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-center space-x-2 w-full py-3 bg-[#141210] border border-[#29241F] text-[#A0988E] text-xs font-semibold rounded-lg"
-                >
-                  <ShieldCheck className="w-4 h-4" />
-                  <span>Admin Portal</span>
-                </Link>
+                {isAdmin && (
+                  <Link
+                    href="/admin"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center justify-center space-x-2 w-full py-3 bg-[#1A1815] border border-[#D4AF37]/50 text-[#D4AF37] text-xs font-semibold rounded-lg"
+                  >
+                    <ShieldCheck className="w-4 h-4" />
+                    <span>Admin Portal</span>
+                  </Link>
+                )}
               </div>
             </div>
 

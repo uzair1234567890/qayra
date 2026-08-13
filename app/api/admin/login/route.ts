@@ -15,8 +15,14 @@ export async function POST(request: Request) {
       );
     }
 
-    const admin = await prisma.admin.findUnique({
-      where: { email: email.toLowerCase().trim() },
+    const input = email.trim().toLowerCase();
+    const admin = await prisma.admin.findFirst({
+      where: {
+        OR: [
+          { email: input },
+          { email: `${input}@qayra.com` },
+        ],
+      },
     });
 
     if (!admin) {

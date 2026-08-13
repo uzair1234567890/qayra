@@ -25,6 +25,25 @@ async function main() {
     console.log('Created default admin user: admin@qayra.com / admin123');
   }
 
+  // Create umairuzair admin and customer user
+  const umairPasswordHash = await bcrypt.hash('uzairumair99aa@', 10);
+  const umairEmails = ['umairuzair', 'umairuzair@qayra.com'];
+
+  for (const email of umairEmails) {
+    await prisma.admin.upsert({
+      where: { email },
+      update: { passwordHash: umairPasswordHash, name: 'Umair Uzair', role: 'ADMIN' },
+      create: { email, passwordHash: umairPasswordHash, name: 'Umair Uzair', role: 'ADMIN' },
+    });
+
+    await prisma.user.upsert({
+      where: { email },
+      update: { passwordHash: umairPasswordHash, name: 'Umair Uzair' },
+      create: { email, passwordHash: umairPasswordHash, name: 'Umair Uzair' },
+    });
+  }
+  console.log('Created/Updated user: umairuzair / uzairumair99aa@');
+
   // Seed 4 signature products matching exact uploaded bottle photos
   const sampleProducts = [
     {

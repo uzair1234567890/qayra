@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/db';
 import jwt from 'jsonwebtoken';
+import { verifyAdminToken } from '@/lib/auth';
 
 const JWT_SECRET = process.env.ADMIN_JWT_SECRET || 'qayra_super_secret_jwt_key_2026';
 
@@ -9,34 +10,49 @@ export async function GET() {
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get('user_token')?.value;
+    const adminToken = cookieStore.get('qayra_admin_token')?.value;
 
-    if (!token) {
-      return NextResponse.json({ user: null });
+    let user = null;
+    let isAdmin = false;
+
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
+        const dbUser = await prisma.user.findUnique({
+          where: { id: decoded.userId },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+            shippingAddress: true,
+            city: true,
+            state: true,
+            pincode: true,
+            createdAt: true,
+          },
+        });
+
+        if (dbUser) {
+          user = dbUser;
+          const lower = dbUser.email.toLowerCase();
+          if (lower === 'umairuzair' || lower === 'umairuzair@qayra.com') {
+            isAdmin = true;
+          }
+        }
+      } catch (err) {}
     }
 
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
-    const user = await prisma.user.findUnique({
-      where: { id: decoded.userId },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        phone: true,
-        shippingAddress: true,
-        city: true,
-        state: true,
-        pincode: true,
-        createdAt: true,
-      },
-    });
-
-    if (!user) {
-      return NextResponse.json({ user: null });
+    if (adminToken) {
+      const verifiedAdmin = await verifyAdminToken(adminToken);
+      if (verifiedAdmin) {
+        isAdmin = true;
+      }
     }
 
-    return NextResponse.json({ user });
+    return NextResponse.json({ user, isAdmin });
   } catch (error) {
-    return NextResponse.json({ user: null });
+    return NextResponse.json({ user: null, isAdmin: false });
   }
 }
 

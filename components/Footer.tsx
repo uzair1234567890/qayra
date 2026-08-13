@@ -7,6 +7,18 @@ import { ArrowRight, CheckCircle2, Shield, HeartHandshake, Sparkles } from 'luci
 export default function Footer() {
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  React.useEffect(() => {
+    fetch('/api/auth/me')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.isAdmin) {
+          setIsAdmin(true);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,11 +137,13 @@ export default function Footer() {
                 Track Order
               </Link>
             </li>
-            <li>
-              <Link href="/admin/login" className="hover:text-[#D4AF37] transition-colors text-[#D4AF37]/80 font-medium">
-                Admin Management Portal
-              </Link>
-            </li>
+            {isAdmin && (
+              <li>
+                <Link href="/admin" className="hover:text-[#D4AF37] transition-colors text-[#D4AF37] font-medium flex items-center gap-1">
+                  <span>Admin Management Portal</span>
+                </Link>
+              </li>
+            )}
           </ul>
         </div>
 

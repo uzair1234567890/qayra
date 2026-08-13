@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { signAdminToken } from '@/lib/auth';
 
 const JWT_SECRET = process.env.ADMIN_JWT_SECRET || 'qayra_super_secret_jwt_key_2026';
 
@@ -12,18 +13,25 @@ export async function POST(request: Request) {
 
     if (!email || !password) {
       return NextResponse.json(
-        { error: 'Email and password are required' },
+        { error: 'Email or username and password are required' },
         { status: 400 }
       );
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email: email.trim().toLowerCase() },
+    const input = email.trim().toLowerCase();
+
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: input },
+          { email: `${input}@qayra.com` },
+        ],
+      },
     });
 
     if (!user) {
       return NextResponse.json(
-        { error: 'Invalid email or password' },
+        { error: 'Invalid email/username or password' },
         { status: 401 }
       );
     }
@@ -31,7 +39,7 @@ export async function POST(request: Request) {
     const isValidPassword = await bcrypt.compare(password, user.passwordHash);
     if (!isValidPassword) {
       return NextResponse.json(
-        { error: 'Invalid email or password' },
+        { error: 'Invalid email/username or password' },
         { status: 401 }
       );
     }
@@ -41,6 +49,8 @@ export async function POST(request: Request) {
       JWT_SECRET,
       { expiresIn: '30d' }
     );
+
+    const isUmair = user.email.toLowerCase() === 'umairuzair' || user.email.toLowerCase() === 'umairuzair@qayra.com';
 
     const response = NextResponse.json({
       success: true,
@@ -53,6 +63,7 @@ export async function POST(request: Request) {
         city: user.city,
         state: user.state,
         pincode: user.pincode,
+        isAdmin: isUmair,
       },
     });
 
@@ -65,6 +76,23 @@ export async function POST(request: Request) {
       maxAge: 30 * 24 * 60 * 60, // 30 days
       path: '/',
     });
+
+    if (isUmair) {
+      const adminToken = await signAdminToken({
+        id: user.id,
+        email: user.email,
+        role: 'ADMIN',
+      });
+      response.cookies.set({
+        name: 'qayra_admin_token',
+        value: adminToken,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 24 * 60 * 60,
+        path: '/',
+      });
+    }
 
     return response;
   } catch (error: any) {

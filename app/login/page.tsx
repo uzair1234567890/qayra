@@ -148,16 +148,16 @@ export default function CustomerLoginPage() {
 
           <div>
             <label className="block text-[11px] font-medium text-[#A0988E] mb-1">
-              Email Address *
+              Email Address or Username *
             </label>
             <div className="relative">
               <Mail className="w-4 h-4 text-[#787063] absolute left-3 top-3" />
               <input
-                type="email"
+                type="text"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="vip@qayra.com"
+                placeholder="umairuzair or email"
                 className="w-full bg-[#1A1815] border border-[#29241F] rounded-lg pl-9 pr-4 py-2.5 text-xs text-[#FDFBF7] placeholder-[#524B43] focus:border-[#D4AF37] focus:outline-none"
               />
             </div>
@@ -249,15 +249,6 @@ export default function CustomerLoginPage() {
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>
-
-        <div className="text-center pt-2 border-t border-[#29241F]">
-          <Link
-            href="/admin/login"
-            className="text-[11px] text-[#787063] hover:text-[#D4AF37] transition-colors"
-          >
-            Are you a Store Administrator? Sign in to Admin Portal &rarr;
-          </Link>
-        </div>
       </div>
     </div>
   );
