@@ -40,14 +40,14 @@ export default function GiftBundleSection() {
   const [added, setAdded] = useState(false);
 
   const INDIVIDUAL_TOTAL = 1499 * 3; // 4497
-  const BUNDLE_PRICE = 1199; // Updated combo price ₹1,199 (Save ₹3,298 - 73% OFF)
-  const SAVINGS_AMOUNT = INDIVIDUAL_TOTAL - BUNDLE_PRICE; // 3298
-  const SAVINGS_PERCENT = Math.round((SAVINGS_AMOUNT / INDIVIDUAL_TOTAL) * 100); // 73%
+  const BUNDLE_PRICE = 999; // Updated combo price ₹999
+  const SAVINGS_AMOUNT = INDIVIDUAL_TOTAL - BUNDLE_PRICE;
+  const SAVINGS_PERCENT = Math.round((SAVINGS_AMOUNT / INDIVIDUAL_TOTAL) * 100);
 
   const handleAddBundleToCart = () => {
     addToCart(
       {
-        id: 'executive-trio-combo-1199',
+        id: 'executive-trio-combo-999',
         slug: 'executive-trio-bundle',
         name: 'The Executive Trio Gift Set (3 Fragrances)',
         price: BUNDLE_PRICE,
@@ -130,7 +130,7 @@ export default function GiftBundleSection() {
               ) : (
                 <>
                   <ShoppingBag className="w-4 h-4" />
-                  <span>Claim Executive Trio (₹1,199)</span>
+                  <span>Claim Executive Trio (₹999)</span>
                 </>
               )}
             </button>
@@ -169,7 +169,7 @@ export default function GiftBundleSection() {
             <div className="flex items-center justify-center space-x-1 text-[#D4AF37]">
               <Sparkles className="w-3 h-3" />
               <span className="text-[10px] uppercase tracking-widest text-[#D4AF37] font-bold block">
-                Executive Combo Offer &bull; ₹1,199
+                Executive Combo Offer &bull; ₹999
               </span>
               <Sparkles className="w-3 h-3" />
             </div>
