@@ -57,7 +57,7 @@ export async function getCachedProducts(where: any = { isActive: true }, orderBy
   } catch (error) {
     console.error('Error fetching cached products:', error);
     if (cached) return cached.data;
-    throw error;
+    return [];
   }
 }
 
@@ -192,6 +192,6 @@ export async function getCachedProductBySlug(slug: string) {
   } catch (error) {
     console.error(`Error fetching cached product by slug ${slug}:`, error);
     if (cached) return cached.data;
-    throw error;
+    return null;
   }
 }
