@@ -18,7 +18,7 @@ export async function POST(request: Request) {
       state,
       pincode,
       couponCode,
-      paymentMethod = 'ONLINE', // 'ONLINE' | 'COD'
+      paymentMethod = 'COD', // COD only
     } = body;
 
     if (!items || !items.length || !customerName || !customerEmail || !customerPhone || !shippingAddress || !pincode) {

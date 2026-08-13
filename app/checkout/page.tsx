@@ -25,7 +25,7 @@ export default function CheckoutPage() {
   const [state, setState] = useState('');
   const [pincode, setPincode] = useState('');
 
-  const [paymentMethod, setPaymentMethod] = useState<'ONLINE' | 'COD'>('ONLINE');
+  const [paymentMethod, setPaymentMethod] = useState<'COD'>('COD');
   const [couponInput, setCouponInput] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState('');
   const [couponError, setCouponError] = useState('');
@@ -369,64 +369,25 @@ export default function CheckoutPage() {
                 <span>Select Payment Method</span>
               </h2>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2">
-                {/* Radio Option 1: Razorpay / Online Payment */}
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod('ONLINE')}
-                  className={`p-4 rounded-xl border text-left transition-all duration-300 flex flex-col justify-between space-y-3 relative ${
-                    paymentMethod === 'ONLINE'
-                      ? 'bg-[#1A1815] border-[#D4AF37] shadow-xl ring-1 ring-[#D4AF37]'
-                      : 'bg-[#1A1815]/60 border-[#29241F] hover:border-[#787063]'
-                  }`}
-                >
-                  <div className="flex items-start justify-between w-full">
-                    <div className="flex items-center space-x-2.5">
-                      <CreditCard className="w-5 h-5 text-[#D4AF37]" />
-                      <span className="font-serif font-bold text-sm text-[#FDFBF7]">Prepaid / Online Payment</span>
-                    </div>
-                    {paymentMethod === 'ONLINE' && (
-                      <span className="w-4 h-4 rounded-full bg-[#D4AF37] text-[#0A0908] flex items-center justify-center text-[10px]">
-                        <Check className="w-3 h-3 stroke-[3]" />
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-[11px] text-[#A0988E] leading-relaxed">
-                    Instant UPI (GPay, PhonePe, Paytm), Credit/Debit Cards & NetBanking.
-                  </p>
-                  <span className="inline-block text-[10px] text-[#52B788] font-semibold bg-[#52B788]/10 px-2 py-0.5 rounded">
-                    ⚡ Instant Order Dispatch
-                  </span>
-                </button>
-
-                {/* Radio Option 2: Cash on Delivery (COD) */}
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod('COD')}
-                  className={`p-4 rounded-xl border text-left transition-all duration-300 flex flex-col justify-between space-y-3 relative ${
-                    paymentMethod === 'COD'
-                      ? 'bg-[#1A1815] border-[#D4AF37] shadow-xl ring-1 ring-[#D4AF37]'
-                      : 'bg-[#1A1815]/60 border-[#29241F] hover:border-[#787063]'
-                  }`}
-                >
+              <div className="pt-2">
+                {/* Cash on Delivery (COD) Payment Option */}
+                <div className="p-4 rounded-xl border border-[#D4AF37] bg-[#1A1815] shadow-xl ring-1 ring-[#D4AF37] flex flex-col justify-between space-y-3 relative">
                   <div className="flex items-start justify-between w-full">
                     <div className="flex items-center space-x-2.5">
                       <Banknote className="w-5 h-5 text-[#D4AF37]" />
                       <span className="font-serif font-bold text-sm text-[#FDFBF7]">Cash on Delivery (COD)</span>
                     </div>
-                    {paymentMethod === 'COD' && (
-                      <span className="w-4 h-4 rounded-full bg-[#D4AF37] text-[#0A0908] flex items-center justify-center text-[10px]">
-                        <Check className="w-3 h-3 stroke-[3]" />
-                      </span>
-                    )}
+                    <span className="w-4 h-4 rounded-full bg-[#D4AF37] text-[#0A0908] flex items-center justify-center text-[10px]">
+                      <Check className="w-3 h-3 stroke-[3]" />
+                    </span>
                   </div>
                   <p className="text-[11px] text-[#A0988E] leading-relaxed">
                     Pay in cash directly to delivery executive upon package arrival.
                   </p>
                   <span className="inline-block text-[10px] text-[#52B788] font-semibold bg-[#52B788]/10 px-2 py-0.5 rounded">
-                    🎉 Free Express Delivery Included
+                    🎉 Free Express Delivery Included &bull; Pay on Arrival
                   </span>
-                </button>
+                </div>
               </div>
 
               {/* Order Submission Button */}
@@ -440,9 +401,7 @@ export default function CheckoutPage() {
                   <span>
                     {loading
                       ? 'Processing Order...'
-                      : paymentMethod === 'COD'
-                      ? `Place COD Order (₹${totalAmount.toLocaleString('en-IN')})`
-                      : `Pay Online (₹${totalAmount.toLocaleString('en-IN')})`}
+                      : `Place COD Order (₹${totalAmount.toLocaleString('en-IN')})`}
                   </span>
                 </button>
               </div>
