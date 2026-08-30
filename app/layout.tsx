@@ -22,9 +22,9 @@ const sansFont = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: 'Qayra | Luxury Car Fragrance & Hanging Car Perfumes',
-  description: 'Elevate your vehicle cabin with Qayra luxury hanging car perfumes. Handcrafted oud, amber, and leather fragrance diffusers with 30-day longevity.',
-  keywords: ['car perfume', 'luxury car fragrance', 'hanging car perfume', 'car diffuser', 'oud car scent'],
+  title: 'Qayra | Luxury Hanging Car Perfume Online India',
+  description: 'Shop luxury hanging car perfumes online at Qayra. Long-lasting oud, musk & sandalwood car fragrances, non-alcoholic, spill-free — perfect for gifting.',
+  keywords: ['car perfume', 'hanging car perfume', 'luxury car perfume', 'car fragrance', 'oud car perfume', 'non-alcoholic car perfume', 'car perfume online India'],
   icons: {
     icon: '/icon.png',
     shortcut: '/favicon.ico',

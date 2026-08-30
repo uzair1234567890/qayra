@@ -2,6 +2,7 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import type { Metadata } from 'next';
 import { Star, ShieldCheck, Sparkles, Truck, RefreshCw } from 'lucide-react';
 import { prisma } from '@/lib/db';
 import { getCachedProductBySlug } from '@/lib/products';
@@ -30,6 +31,35 @@ interface ProductDetailPageProps {
   }>;
 }
 
+export async function generateMetadata({ params }: ProductDetailPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const data = await getCachedProductBySlug(slug);
+
+  if (!data || !data.product) {
+    return {
+      title: 'Product Not Found | Qayra',
+      description: 'This product could not be found.',
+    };
+  }
+
+  const { product } = data;
+  const productKeyword = product.scentFamily?.toLowerCase().replace(/&/g, 'and') || 'luxury';
+
+  return {
+    title: `${product.name} | ${productKeyword} Hanging Car Perfume | Qayra`,
+    description: `Buy ${product.name} online — ${product.subtitle || product.scentFamily} hanging car perfume. Non-alcoholic, spill-free, 30-day longevity. ₹${product.price}. Free shipping across India.`,
+    keywords: [
+      product.name,
+      'hanging car perfume',
+      'car perfume online India',
+      product.scentFamily,
+      'luxury car perfume',
+      'non-alcoholic car perfume',
+      'Qayra',
+    ],
+  };
+}
+
 export default async function ProductDetailPage({ params }: ProductDetailPageProps) {
   const { slug } = await params;
 
@@ -43,6 +73,56 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
   const { product, primaryImage, relatedProducts: formattedRelated } = data;
 
   return (
+    <>
+      {/* JSON-LD Structured Data for Google Rich Results */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'Product',
+            name: product.name,
+            description: product.description,
+            image: primaryImage.startsWith('http') ? primaryImage : `https://qayra.in${primaryImage}`,
+            brand: {
+              '@type': 'Brand',
+              name: 'Qayra',
+            },
+            offers: {
+              '@type': 'Offer',
+              priceCurrency: 'INR',
+              price: product.price.toString(),
+              availability: product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+              url: `https://qayra.in/products/${product.slug}`,
+              seller: {
+                '@type': 'Organization',
+                name: 'Qayra',
+              },
+            },
+            aggregateRating: product.reviewsCount > 0 ? {
+              '@type': 'AggregateRating',
+              ratingValue: product.rating.toString(),
+              reviewCount: product.reviewsCount.toString(),
+              bestRating: '5',
+              worstRating: '1',
+            } : undefined,
+            category: 'Car Perfume',
+            material: 'Non-alcoholic essential oils',
+            additionalProperty: [
+              {
+                '@type': 'PropertyValue',
+                name: 'Scent Family',
+                value: product.scentFamily,
+              },
+              {
+                '@type': 'PropertyValue',
+                name: 'Longevity',
+                value: '30 Days',
+              },
+            ],
+          }),
+        }}
+      />
     <div className="max-w-7xl mx-auto px-4 sm:px-8 py-12 pb-24 sm:pb-12 space-y-16">
       {/* Breadcrumb Navigation */}
       <nav className="text-xs uppercase tracking-widest text-[#787063] flex items-center space-x-2">
@@ -204,5 +284,6 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
         </div>
       )}
     </div>
+    </>
   );
 }

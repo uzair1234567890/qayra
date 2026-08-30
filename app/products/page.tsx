@@ -1,10 +1,17 @@
 import React from 'react';
+import type { Metadata } from 'next';
 import { getCachedProducts } from '@/lib/products';
 import ProductCard from '@/components/ProductCard';
 import ProductFilterClient from './ProductFilterClient';
 import GiftBundleSection from '@/components/GiftBundleSection';
 
-export const revalidate = 60; // 60s ISR cache revalidation for optimal execution speed
+export const revalidate = 60;
+
+export const metadata: Metadata = {
+  title: 'Luxury Hanging Car Perfumes Online India | Qayra',
+  description: 'Shop luxury hanging car perfumes online at Qayra. Long-lasting oud, musk & sandalwood car fragrances, non-alcoholic, spill-free — 30-day longevity. Free shipping across India.',
+  keywords: ['hanging car perfume', 'car perfume online India', 'luxury car perfume', 'oud car perfume', 'non-alcoholic car perfume', 'car fragrance', 'Qayra'],
+};
 
 interface ProductsPageProps {
   searchParams: Promise<{
@@ -49,10 +56,10 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
           The Qayra Vault
         </span>
         <h1 className="font-serif text-4xl sm:text-5xl font-bold text-[#FDFBF7]">
-          Hanging Car Perfumes
+          Luxury Hanging Car Perfumes Online India
         </h1>
         <p className="text-xs sm:text-sm text-[#A0988E]">
-          Explore our complete collection of handcrafted car fragrance diffusers. Concentrated oils blended for 30-day vehicle cabin diffusion.
+          Shop Qayra's complete collection of non-alcoholic, spill-free hanging car perfumes. Long-lasting oud, musk & sandalwood car fragrances with 30-day diffusion.
         </p>
       </div>
 

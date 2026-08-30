@@ -31,8 +31,9 @@ export default async function HomePage() {
               </div>
 
               <h1 className="font-serif text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-[#FDFBF7] leading-[1.1]">
-                Crafted for the <br />
-                <span className="gold-gradient-text">Discerning Drive</span>
+                Luxury Hanging Car Perfumes{' '}
+                <br />
+                <span className="gold-gradient-text">by Qayra</span>
               </h1>
 
               <p className="max-w-xl mx-auto lg:mx-0 text-sm sm:text-base text-[#B5AC9E] font-sans font-light leading-relaxed">
@@ -90,8 +91,9 @@ export default async function HomePage() {
                 Olfactory Artistry
               </div>
               <h2 className="font-serif text-3xl sm:text-4xl font-bold text-[#FDFBF7] leading-tight">
-                Not Air Fresheners — <br />
-                <span className="gold-gradient-text">Pure Fine Fragrance.</span>
+                Long-Lasting Oud & Musk{' '}
+                <br />
+                <span className="gold-gradient-text">Car Fragrances</span>
               </h2>
               <p className="text-sm text-[#A0988E] leading-relaxed font-light">
                 Standard automotive scents rely on synthetic aerosols that fade in days. Qayra approaches vehicle fragrancing as fine perfumery. Each hanging diffuser features a porous beechwood cap that absorbs concentrated oil, gently evaporating scent as air circulates naturally through your dashboard vents.
@@ -112,7 +114,7 @@ export default async function HomePage() {
             <div className="relative aspect-square rounded-xl overflow-hidden border border-[#29241F] shadow-2xl">
               <Image
                 src="/images/products/amber_cedar.jpg"
-                alt="Qayra handcrafted wood cap diffuser bottle"
+                alt="Qayra luxury hanging car perfume with handcrafted beechwood cap"
                 fill
                 className="object-cover"
               />
@@ -143,7 +145,7 @@ export default async function HomePage() {
           >
             <Image
               src="/images/products/shadow_elixir.jpg"
-              alt="Oud and wood fragrance family"
+              alt="Oud wood luxury hanging car perfume by Qayra"
               fill
               className="object-cover group-hover:scale-105 transition-transform duration-700 opacity-60"
             />
@@ -161,7 +163,7 @@ export default async function HomePage() {
           >
             <Image
               src="/images/products/velvet_midnight.jpg"
-              alt="Amber and spice fragrance family"
+              alt="Amber spice hanging car perfume by Qayra"
               fill
               className="object-cover group-hover:scale-105 transition-transform duration-700 opacity-60"
             />
@@ -179,7 +181,7 @@ export default async function HomePage() {
           >
             <Image
               src="/images/products/obsidian_mist.jpg"
-              alt="Leather and smoke fragrance family"
+              alt="Leather smoke hanging car perfume by Qayra"
               fill
               className="object-cover group-hover:scale-105 transition-transform duration-700 opacity-60"
             />
@@ -197,7 +199,7 @@ export default async function HomePage() {
           >
             <Image
               src="/images/products/sacred_nile.jpg"
-              alt="Fresh and citrus fragrance family"
+              alt="Fresh citrus hanging car perfume by Qayra"
               fill
               className="object-cover group-hover:scale-105 transition-transform duration-700 opacity-60"
             />
