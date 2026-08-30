@@ -159,7 +159,7 @@ export default function CustomerAccountPage() {
               <div className="space-y-1">
                 <h3 className="font-serif text-xl font-bold text-[#FDFBF7]">No Orders Placed Yet</h3>
                 <p className="text-xs text-[#A0988E]">
-                  Discover your signature 40-day luxury car diffuser today.
+                  Discover your signature 30-day luxury car diffuser today.
                 </p>
               </div>
               <Link

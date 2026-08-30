@@ -2,7 +2,7 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { CheckCircle2, PackageCheck, Truck, ShieldCheck, Clock, ArrowRight } from 'lucide-react';
+import { CheckCircle2, PackageCheck, Truck, ShieldCheck, Clock, ArrowRight, MessageCircle, Smartphone, Banknote, AlertCircle } from 'lucide-react';
 import { prisma } from '@/lib/db';
 
 export const revalidate = 0;
@@ -30,9 +30,16 @@ export default async function OrderPage({ params }: OrderPageProps) {
   }
 
   const isPaid = order.paymentStatus === 'PAID';
+  const isPrepaid = order.paymentMethod === 'PREPAID';
+  const isCOD = order.paymentMethod === 'COD';
+
+  const whatsappMessage = encodeURIComponent(
+    `Hi Qayra Parfums, I have placed prepaid order #${order.orderNumber} for ₹${order.totalAmount}. Please share the UPI payment QR / details so I can complete payment.`
+  );
+  const whatsappUrl = `https://wa.me/918369389278?text=${whatsappMessage}`;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-8 py-16 space-y-12">
+    <div className="max-w-4xl mx-auto px-4 sm:px-8 py-16 space-y-10">
       {/* Confirmation Header Banner */}
       <div className="bg-[#141210] border border-[#29241F] rounded-2xl p-8 text-center space-y-4 relative overflow-hidden">
         <div className="inline-flex items-center justify-center p-4 bg-[#D4AF37]/10 border border-[#D4AF37]/40 rounded-full text-[#D4AF37] mb-2">
@@ -47,7 +54,7 @@ export default async function OrderPage({ params }: OrderPageProps) {
             Thank You, {order.customerName}!
           </h1>
           <p className="text-xs sm:text-sm text-[#A0988E] max-w-md mx-auto">
-            Your luxury car fragrance order has been confirmed. An email receipt has been sent to{' '}
+            Your luxury car fragrance order has been received. An email receipt has been sent to{' '}
             <span className="text-[#FDFBF7] font-medium">{order.customerEmail}</span>.
           </p>
         </div>
@@ -58,6 +65,62 @@ export default async function OrderPage({ params }: OrderPageProps) {
         </div>
       </div>
 
+      {/* Prepaid WhatsApp Payment Alert Box */}
+      {isPrepaid && (
+        <div className="bg-gradient-to-r from-[#141F16] via-[#1A2E1D] to-[#141F16] border-2 border-[#25D366]/40 rounded-2xl p-6 sm:p-8 space-y-4 shadow-2xl">
+          <div className="flex items-center space-x-3">
+            <div className="p-3 bg-[#25D366]/20 border border-[#25D366]/50 rounded-xl text-[#25D366]">
+              <Smartphone className="w-6 h-6" />
+            </div>
+            <div>
+              <span className="text-[10px] uppercase tracking-widest text-[#25D366] font-bold">
+                Action Required &bull; Prepaid Order
+              </span>
+              <h2 className="font-serif text-xl sm:text-2xl font-bold text-[#FDFBF7]">
+                Payment will be collected on WhatsApp
+              </h2>
+            </div>
+          </div>
+
+          <p className="text-xs sm:text-sm text-[#D6D0C7] leading-relaxed">
+            Our customer concierge team will connect with you shortly on WhatsApp at{' '}
+            <strong className="text-[#25D366] font-mono">{order.customerPhone || 'your registered mobile number'}</strong>{' '}
+            with the UPI payment link / QR code to complete your payment of{' '}
+            <strong className="text-[#D4AF37]">₹{order.totalAmount.toLocaleString('en-IN')}</strong>. Once payment is verified, your order will be dispatched immediately.
+          </p>
+
+          <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
+            <a
+              href={whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full sm:w-auto px-6 py-3.5 bg-[#25D366] hover:bg-[#20bd5a] text-[#0A0908] font-bold text-xs uppercase tracking-wider rounded-lg flex items-center justify-center space-x-2 transition-all shadow-lg active:scale-95"
+            >
+              <MessageCircle className="w-4 h-4 fill-[#0A0908]" />
+              <span>Open WhatsApp to Pay (₹{order.totalAmount.toLocaleString('en-IN')})</span>
+            </a>
+            <span className="text-[11px] text-[#A0988E]">
+              Or wait for our team to message you on WhatsApp.
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* COD Notice Box */}
+      {isCOD && (
+        <div className="bg-[#141210] border border-[#E69A28]/40 rounded-xl p-5 flex items-start space-x-3.5">
+          <div className="p-2.5 bg-[#E69A28]/10 rounded-lg text-[#E69A28] shrink-0 mt-0.5">
+            <Banknote className="w-5 h-5" />
+          </div>
+          <div className="space-y-1 text-xs">
+            <h4 className="font-serif font-bold text-[#FDFBF7] text-sm">Cash on Delivery (COD) Order</h4>
+            <p className="text-[#A0988E] leading-relaxed">
+              Please keep <strong className="text-[#D4AF37]">₹{order.totalAmount.toLocaleString('en-IN')}</strong> in cash ready when the delivery executive arrives at your address. Includes ₹50 COD handling fee.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Shipment Tracker Visual Timeline */}
       <div className="bg-[#141210] border border-[#29241F] rounded-xl p-6 sm:p-8 space-y-6">
         <h3 className="font-serif text-lg font-bold text-[#FDFBF7] uppercase tracking-wider">
@@ -65,10 +128,10 @@ export default async function OrderPage({ params }: OrderPageProps) {
         </h3>
 
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 relative">
-          <div className={`p-4 rounded-lg border text-center space-y-2 ${isPaid ? 'bg-[#1A1815] border-[#D4AF37] text-[#D4AF37]' : 'bg-[#141210] border-[#29241F] text-[#787063]'}`}>
+          <div className={`p-4 rounded-lg border text-center space-y-2 ${isPaid || order.orderStatus === 'PROCESSING' ? 'bg-[#1A1815] border-[#D4AF37] text-[#D4AF37]' : 'bg-[#141210] border-[#29241F] text-[#787063]'}`}>
             <Clock className="w-5 h-5 mx-auto" />
             <div className="text-xs font-serif font-bold uppercase">1. Order Placed</div>
-            <div className="text-[10px] text-[#A0988E]">{isPaid ? 'Payment Received' : 'Pending Payment'}</div>
+            <div className="text-[10px] text-[#A0988E]">{isPaid ? 'Payment Received' : isPrepaid ? 'WhatsApp Payment' : 'Cash on Arrival'}</div>
           </div>
 
           <div className={`p-4 rounded-lg border text-center space-y-2 ${order.orderStatus === 'PROCESSING' || order.orderStatus === 'SHIPPED' || order.orderStatus === 'DELIVERED' ? 'bg-[#1A1815] border-[#D4AF37] text-[#D4AF37]' : 'bg-[#141210] border-[#29241F] text-[#787063]'}`}>
@@ -103,16 +166,16 @@ export default async function OrderPage({ params }: OrderPageProps) {
 
           <div className="flex flex-wrap items-center gap-3">
             <span className="px-3 py-1 rounded text-xs font-bold uppercase tracking-wider bg-[#D4AF37]/10 border border-[#D4AF37]/40 text-[#D4AF37]">
-              {order.paymentMethod === 'COD' ? '💵 Cash on Delivery' : '💳 Online Payment'}
+              {order.paymentMethod === 'COD' ? '💵 Cash on Delivery' : isPrepaid ? '📱 Prepaid (WhatsApp)' : '💳 Online Payment'}
             </span>
             <span className={`px-3 py-1 rounded text-xs font-bold uppercase tracking-wider ${
               isPaid
                 ? 'bg-[#2A9D8F]/10 border border-[#2A9D8F]/40 text-[#2A9D8F]'
-                : order.paymentMethod === 'COD'
-                ? 'bg-[#52B788]/10 border border-[#52B788]/40 text-[#52B788]'
+                : isPrepaid
+                ? 'bg-[#25D366]/10 border border-[#25D366]/40 text-[#25D366]'
                 : 'bg-[#E69A28]/10 border border-[#E69A28]/40 text-[#E69A28]'
             }`}>
-              {order.paymentMethod === 'COD' ? 'Pay Cash on Arrival' : order.paymentStatus}
+              {isPaid ? 'Payment Confirmed' : isPrepaid ? 'Payment via WhatsApp' : 'Pay Cash on Arrival'}
             </span>
           </div>
         </div>
@@ -155,15 +218,34 @@ export default async function OrderPage({ params }: OrderPageProps) {
               Payment Details
             </span>
             <div className="flex justify-between text-[#A0988E]">
-              <span>Subtotal</span>
-              <span className="text-[#FDFBF7]">₹{order.totalAmount.toLocaleString('en-IN')}</span>
+              <span>Payment Method</span>
+              <span className="text-[#FDFBF7] font-medium">
+                {isCOD ? 'Cash on Delivery (COD)' : isPrepaid ? 'Prepaid (WhatsApp)' : 'Online Payment'}
+              </span>
             </div>
+            {order.couponCode && (
+              <div className="flex justify-between text-[#52B788] font-medium">
+                <span>Coupon ({order.couponCode})</span>
+                <span>Applied</span>
+              </div>
+            )}
             <div className="flex justify-between text-[#52B788] font-medium">
               <span>Express Delivery</span>
               <span>FREE</span>
             </div>
+            {isCOD ? (
+              <div className="flex justify-between text-[#E69A28] font-medium">
+                <span>COD Handling Fee</span>
+                <span>+₹50</span>
+              </div>
+            ) : (
+              <div className="flex justify-between text-[#52B788] font-medium">
+                <span>Prepaid Handling Fee</span>
+                <span>FREE (₹0)</span>
+              </div>
+            )}
             <div className="flex justify-between font-serif text-base font-bold text-[#FDFBF7] pt-2 border-t border-[#29241F]">
-              <span>Total Paid</span>
+              <span>Total Payable</span>
               <span className="text-[#D4AF37]">₹{order.totalAmount.toLocaleString('en-IN')}</span>
             </div>
           </div>

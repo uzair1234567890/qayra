@@ -244,7 +244,7 @@ export default function FragranceQuiz() {
                       ₹{result.price.toLocaleString('en-IN')}
                     </span>
                     <span className="text-[10px] text-[#52B788] uppercase tracking-wider flex items-center gap-1 font-semibold">
-                      <ShieldCheck className="w-3.5 h-3.5" /> 40-Day Longevity Included
+                      <ShieldCheck className="w-3.5 h-3.5" /> 30-Day Longevity Included
                     </span>
                   </div>
                 </div>

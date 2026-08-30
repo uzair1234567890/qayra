@@ -181,7 +181,7 @@ export default function Navbar() {
             </div>
 
             <div className="text-center text-[10px] text-[#A0988E] uppercase tracking-widest pt-6 border-t border-[#29241F] mt-6">
-              Qayra Parfums &bull; Up to 40-Day Longevity
+              Qayra Parfums &bull; Up to 30-Day Longevity
             </div>
           </div>
         )}

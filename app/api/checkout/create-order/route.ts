@@ -76,24 +76,6 @@ export async function POST(request: Request) {
       });
     }
 
-    // Coupon discount logic
-    let discountPct = 0;
-    if (couponCode) {
-      const normalizedCode = couponCode.trim().toUpperCase();
-      if (normalizedCode === 'ROYAL15') discountPct = 0.15;
-      if (normalizedCode === 'EXECUTIVE20') discountPct = 0.20;
-    }
-
-    const discountAmount = Math.round(totalAmount * discountPct);
-    const discountedSubtotal = Math.max(0, totalAmount - discountAmount);
-
-    // Delivery is 100% FREE for all orders (Prepaid & COD)
-    const shippingFee = 0;
-    const finalTotalAmount = discountedSubtotal;
-
-    // Generate unique order number (e.g. QYR-839201)
-    const orderNumber = `QYR-${Math.floor(100000 + Math.random() * 900000)}`;
-
     // Check if user account exists for this email or token
     let userId: string | null = null;
     try {
@@ -114,8 +96,69 @@ export async function POST(request: Request) {
       // Ignore token parse errors
     }
 
+    // Coupon discount logic & Single-use validation
+    let discountPct = 0;
+    let normalizedCode: string | null = null;
+
+    if (couponCode && typeof couponCode === 'string' && couponCode.trim()) {
+      normalizedCode = couponCode.trim().toUpperCase();
+      if (normalizedCode === 'ROYAL15') discountPct = 0.10; // 10% Discount
+      else if (normalizedCode === 'EXECUTIVE20') discountPct = 0.20; // 20% Discount
+      else {
+        return NextResponse.json(
+          { error: 'Invalid coupon code. Try ROYAL15 for 10% OFF.' },
+          { status: 400 }
+        );
+      }
+
+      // Check single-use restriction in database
+      const normalizedEmail = customerEmail.trim().toLowerCase();
+      const normalizedPhone = customerPhone ? customerPhone.trim().replace(/\s+/g, '') : '';
+      const whereConditions: any[] = [{ customerEmail: { equals: normalizedEmail, mode: 'insensitive' } }];
+
+      if (normalizedPhone.length >= 10) {
+        whereConditions.push({ customerPhone: { contains: normalizedPhone.slice(-10) } });
+      }
+      if (userId) {
+        whereConditions.push({ userId });
+      }
+
+      try {
+        const priorOrderWithCoupon = await prisma.order.findFirst({
+          where: {
+            couponCode: normalizedCode,
+            paymentStatus: { not: 'FAILED' },
+            orderStatus: { not: 'CANCELLED' },
+            OR: whereConditions,
+          },
+        });
+
+        if (priorOrderWithCoupon) {
+          return NextResponse.json(
+            {
+              error: `Coupon ${normalizedCode} has already been redeemed once for this account/email/phone. Each coupon code is single-use only.`,
+            },
+            { status: 400 }
+          );
+        }
+      } catch (dbErr) {
+        console.warn('[COUPON REUSE CHECK WARNING]', dbErr);
+      }
+    }
+
+    const discountAmount = Math.round(totalAmount * discountPct);
+    const discountedSubtotal = Math.max(0, totalAmount - discountAmount);
+
+    // Cash on Delivery has +₹50 handling charge; Prepaid is ₹0 free delivery
+    const isCODOrder = paymentMethod === 'COD';
+    const codFee = isCODOrder ? 50 : 0;
+    const finalTotalAmount = discountedSubtotal + codFee;
+
+    // Generate unique order number (e.g. QYR-839201)
+    const orderNumber = `QYR-${Math.floor(100000 + Math.random() * 900000)}`;
+
     // Handle Cash on Delivery (COD)
-    if (paymentMethod === 'COD') {
+    if (isCODOrder) {
       const newOrder = await prisma.order.create({
         data: {
           orderNumber,
@@ -131,6 +174,9 @@ export async function POST(request: Request) {
           paymentMethod: 'COD',
           paymentStatus: 'COD_PENDING',
           orderStatus: 'PROCESSING',
+          couponCode: normalizedCode,
+          discountAmount,
+          codFee: 50,
           razorpayOrderId: null,
           items: {
             create: verifiedOrderItems,
@@ -149,7 +195,7 @@ export async function POST(request: Request) {
         });
       }
 
-      // Dispatch instant email alerts to customer and admin (umaird68uu@gmail.com)
+      // Dispatch instant email alerts to customer and admin
       const emailPayload = {
         orderNumber: newOrder.orderNumber,
         customerName: newOrder.customerName,
@@ -168,7 +214,6 @@ export async function POST(request: Request) {
         })),
       };
 
-      // Dispatch instant email alerts to customer and admin (umaird68uu@gmail.com)
       try {
         await Promise.allSettled([
           sendCustomerOrderEmail(emailPayload),
@@ -185,7 +230,80 @@ export async function POST(request: Request) {
       });
     }
 
-    // Handle Online / Razorpay Payment
+    // Handle Prepaid (WhatsApp Payment Collection / UPI)
+    if (paymentMethod === 'PREPAID') {
+      const newOrder = await prisma.order.create({
+        data: {
+          orderNumber,
+          userId,
+          customerName,
+          customerEmail,
+          customerPhone: customerPhone || '',
+          shippingAddress,
+          city: city || 'City',
+          state: state || 'State',
+          pincode,
+          totalAmount: finalTotalAmount,
+          paymentMethod: 'PREPAID',
+          paymentStatus: 'PENDING',
+          orderStatus: 'PROCESSING',
+          couponCode: normalizedCode,
+          discountAmount,
+          codFee: 0,
+          razorpayOrderId: null,
+          items: {
+            create: verifiedOrderItems,
+          },
+        },
+        include: {
+          items: true,
+        },
+      });
+
+      // Decrement product stock immediately for Prepaid order
+      for (const item of verifiedOrderItems) {
+        await prisma.product.update({
+          where: { id: item.productId },
+          data: { stock: { decrement: item.quantity } },
+        });
+      }
+
+      // Dispatch instant email alerts to customer and admin
+      const emailPayload = {
+        orderNumber: newOrder.orderNumber,
+        customerName: newOrder.customerName,
+        customerEmail: newOrder.customerEmail,
+        customerPhone: newOrder.customerPhone,
+        shippingAddress: newOrder.shippingAddress,
+        city: newOrder.city,
+        state: newOrder.state,
+        pincode: newOrder.pincode,
+        totalAmount: newOrder.totalAmount,
+        paymentMethod: 'PREPAID',
+        items: newOrder.items.map((i) => ({
+          productName: i.productName,
+          quantity: i.quantity,
+          price: i.price,
+        })),
+      };
+
+      try {
+        await Promise.allSettled([
+          sendCustomerOrderEmail(emailPayload),
+          sendAdminOrderNotification(emailPayload),
+        ]);
+      } catch (e) {
+        console.error('[PREPAID EMAIL DISPATCH ERROR]', e);
+      }
+
+      return NextResponse.json({
+        success: true,
+        order: newOrder,
+        isPrepaid: true,
+      });
+    }
+
+    // Handle Online / Razorpay Payment (Fallback)
     let razorpayOrderId = `order_mock_${orderNumber}_${Date.now()}`;
     const keyId = process.env.RAZORPAY_KEY_ID;
     const keySecret = process.env.RAZORPAY_KEY_SECRET;
@@ -229,6 +347,9 @@ export async function POST(request: Request) {
         paymentMethod: 'ONLINE',
         paymentStatus: 'PENDING',
         orderStatus: 'PENDING',
+        couponCode: normalizedCode,
+        discountAmount,
+        codFee: 0,
         razorpayOrderId,
         items: {
           create: verifiedOrderItems,

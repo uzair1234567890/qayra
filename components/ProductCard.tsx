@@ -91,7 +91,7 @@ export default function ProductCard({
               <span className="text-[#787063] text-[9px] sm:text-[10px]">({reviewsCount})</span>
             </div>
             <span className="hidden sm:flex text-[10px] text-[#A0988E] uppercase tracking-widest items-center gap-1">
-              <Sparkles className="w-3 h-3 text-[#D4AF37]" /> 40-Day
+              <Sparkles className="w-3 h-3 text-[#D4AF37]" /> 30-Day
             </span>
           </div>
 

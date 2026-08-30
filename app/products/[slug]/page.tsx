@@ -147,7 +147,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
             </div>
             <div className="flex items-center space-x-2">
               <RefreshCw className="w-4 h-4 text-[#D4AF37]" />
-              <span>40-Day Fragrance Guarantee</span>
+              <span>30-Day Fragrance Guarantee</span>
             </div>
           </div>
         </div>

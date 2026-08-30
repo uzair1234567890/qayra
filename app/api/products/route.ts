@@ -115,7 +115,7 @@ export async function POST(request: Request) {
         heartNotes: heartNotes || 'Smoked Oud, Amber',
         baseNotes: baseNotes || 'Cedarwood, Dark Leather',
         intensity: Number(intensity || 4),
-        longevity: longevity || '30-40 Days',
+        longevity: longevity || '30 Days',
         price: Number(price),
         originalPrice: originalPrice ? Number(originalPrice) : null,
         images: imagesJson,

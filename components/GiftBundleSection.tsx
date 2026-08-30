@@ -78,7 +78,7 @@ export default function GiftBundleSection() {
               The Executive Trio Set
             </h2>
             <p className="text-xs sm:text-sm text-[#A0988E] leading-relaxed">
-              Experience the full Qayra scent journey. Includes 3 signature 40-day wooden diffusers packaged in a matte gold-embossed velvet presentation gift box.
+              Experience the full Qayra scent journey. Includes 3 signature 30-day wooden diffusers packaged in a matte gold-embossed velvet presentation gift box.
             </p>
           </div>
 
@@ -174,7 +174,7 @@ export default function GiftBundleSection() {
               <Sparkles className="w-3 h-3" />
             </div>
             <p className="font-serif text-sm font-bold text-[#FDFBF7]">
-              3 &times; 40-Day Handcrafted Vials
+              3 &times; 30-Day Handcrafted Vials
             </p>
             <p className="text-[10px] text-[#A0988E]">
               Shadow Elixir &bull; Velvet Midnight &bull; Obsidian Mist

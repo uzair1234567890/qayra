@@ -52,7 +52,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
           Hanging Car Perfumes
         </h1>
         <p className="text-xs sm:text-sm text-[#A0988E]">
-          Explore our complete collection of handcrafted car fragrance diffusers. Concentrated oils blended for 40-day vehicle cabin diffusion.
+          Explore our complete collection of handcrafted car fragrance diffusers. Concentrated oils blended for 30-day vehicle cabin diffusion.
         </p>
       </div>
 

@@ -36,13 +36,13 @@ export default async function HomePage() {
               </h1>
 
               <p className="max-w-xl mx-auto lg:mx-0 text-sm sm:text-base text-[#B5AC9E] font-sans font-light leading-relaxed">
-                Hanging car perfumes handcrafted with high-concentration essential oils, Cambodian agarwood, and Tuscan leather. Designed to transform your vehicle cabin into an sanctuary of quiet luxury for 40 days.
+                Hanging car perfumes handcrafted with high-concentration essential oils, Cambodian agarwood, and Tuscan leather. Designed to transform your vehicle cabin into an sanctuary of quiet luxury for 30 days.
               </p>
 
               {/* Quality Key Takeaways Pills */}
               <div className="grid grid-cols-3 gap-3 pt-2 max-w-lg mx-auto lg:mx-0 text-left border-t border-[#29241F]">
                 <div>
-                  <h4 className="font-serif text-lg sm:text-xl font-bold text-[#D4AF37]">40 Days</h4>
+                  <h4 className="font-serif text-lg sm:text-xl font-bold text-[#D4AF37]">30 Days</h4>
                   <p className="text-[10px] text-[#787063] uppercase tracking-wider">Continuous Diffusion</p>
                 </div>
                 <div>
@@ -99,7 +99,7 @@ export default async function HomePage() {
 
               <div className="grid grid-cols-2 gap-6 pt-4 border-t border-[#29241F]">
                 <div>
-                  <h4 className="font-serif text-2xl font-bold text-[#D4AF37]">40 Days</h4>
+                  <h4 className="font-serif text-2xl font-bold text-[#D4AF37]">30 Days</h4>
                   <p className="text-xs text-[#787063] uppercase tracking-wider mt-1">Continuous Diffusion</p>
                 </div>
                 <div>

@@ -116,6 +116,23 @@ export async function sendCustomerOrderEmail(props: OrderEmailProps) {
             We have confirmed your purchase for Qayra luxury car perfumes. Our scent artisans are preparing your package for express dispatch.
           </p>
 
+          ${
+            paymentMethod === 'PREPAID'
+              ? `
+              <div style="background: #162B1A; border: 1px solid #25D366; color: #FDFBF7; padding: 14px; border-radius: 6px; margin: 16px 0; font-size: 13px; line-height: 1.5;">
+                <strong style="color: #25D366; display: block; margin-bottom: 4px;">📱 WhatsApp Payment Collection:</strong>
+                Our team will reach out to you shortly on WhatsApp at <strong>${props.customerPhone || customerEmail}</strong> with the UPI payment QR code to collect payment of <strong>₹${totalAmount.toLocaleString('en-IN')}</strong>.
+              </div>
+              `
+              : paymentMethod === 'COD'
+              ? `
+              <div style="background: #25201B; border: 1px solid #C5A059; color: #D4AF37; padding: 14px; border-radius: 6px; margin: 16px 0; font-size: 13px; line-height: 1.5;">
+                <strong>💵 Cash on Delivery:</strong> Please keep <strong>₹${totalAmount.toLocaleString('en-IN')}</strong> ready in cash upon arrival at your doorstep (includes ₹50 COD fee).
+              </div>
+              `
+              : ''
+          }
+
           <div class="section-title">Order Items</div>
           <table>
             ${itemsHtml}

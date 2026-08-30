@@ -23,7 +23,7 @@ const sansFont = Plus_Jakarta_Sans({
 
 export const metadata: Metadata = {
   title: 'Qayra | Luxury Car Fragrance & Hanging Car Perfumes',
-  description: 'Elevate your vehicle cabin with Qayra luxury hanging car perfumes. Handcrafted oud, amber, and leather fragrance diffusers with 40-day longevity.',
+  description: 'Elevate your vehicle cabin with Qayra luxury hanging car perfumes. Handcrafted oud, amber, and leather fragrance diffusers with 30-day longevity.',
   keywords: ['car perfume', 'luxury car fragrance', 'hanging car perfume', 'car diffuser', 'oud car scent'],
   icons: {
     icon: '/icon.png',

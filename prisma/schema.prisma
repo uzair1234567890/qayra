@@ -20,7 +20,7 @@ model Product {
   heartNotes    String
   baseNotes     String
   intensity     Int         @default(4) // 1-5 scale
-  longevity     String      @default("40 Days")
+  longevity     String      @default("30 Days")
   price         Float
   originalPrice Float?
   images        String      // JSON array of image URLs
@@ -70,9 +70,12 @@ model Order {
   state            String
   pincode          String
   totalAmount      Float
-  paymentMethod    String      @default("ONLINE") // ONLINE, COD
+  paymentMethod    String      @default("ONLINE") // ONLINE, COD, PREPAID
   paymentStatus    String      @default("PENDING") // PENDING, PAID, FAILED, COD_PENDING
   orderStatus      String      @default("PENDING") // PENDING, PROCESSING, SHIPPED, DELIVERED, CANCELLED
+  couponCode       String?
+  discountAmount   Float?      @default(0)
+  codFee           Float?      @default(0)
   razorpayOrderId  String?
   razorpayPaymentId String?
   createdAt        DateTime    @default(now())
@@ -81,6 +84,8 @@ model Order {
 
   @@index([userId])
   @@index([customerEmail])
+  @@index([customerPhone])
+  @@index([couponCode])
   @@index([paymentStatus])
   @@index([orderStatus])
   @@index([createdAt])

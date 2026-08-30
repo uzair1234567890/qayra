@@ -20,7 +20,7 @@ export default function HeaderBanner() {
             FIRST ORDER OFFER
           </span>
           <span className="text-[#A0988E] text-[11px] sm:text-xs">
-            Use Code <span className="font-mono text-[#D4AF37] font-bold">ROYAL15</span> for <strong className="text-[#FDFBF7]">15% OFF</strong> + Free Express Delivery across India
+            Use Code <span className="font-mono text-[#D4AF37] font-bold">ROYAL15</span> for <strong className="text-[#FDFBF7]">10% OFF</strong> + Free Express Delivery across India
           </span>
         </div>
 
@@ -46,7 +46,7 @@ export default function HeaderBanner() {
           <span className="hidden md:inline text-[#787063]">&bull;</span>
 
           <span className="hidden md:flex items-center text-[#A0988E] gap-1 text-[10px] uppercase tracking-wider">
-            <ShieldCheck className="w-3 h-3 text-[#D4AF37]" /> 40-Day Guarantee
+            <ShieldCheck className="w-3 h-3 text-[#D4AF37]" /> 30-Day Guarantee
           </span>
         </div>
       </div>
