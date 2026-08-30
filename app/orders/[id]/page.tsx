@@ -223,9 +223,9 @@ export default async function OrderPage({ params }: OrderPageProps) {
                 {isCOD ? 'Cash on Delivery (COD)' : isPrepaid ? 'Prepaid (WhatsApp)' : 'Online Payment'}
               </span>
             </div>
-            {order.couponCode && (
+            {order.razorpayOrderId?.startsWith('COUPON:') && (
               <div className="flex justify-between text-[#52B788] font-medium">
-                <span>Coupon ({order.couponCode})</span>
+                <span>Coupon ({order.razorpayOrderId.replace('COUPON:', '')})</span>
                 <span>Applied</span>
               </div>
             )}

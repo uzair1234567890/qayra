@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import jwt from 'jsonwebtoken';
-import Razorpay from 'razorpay';
 import { prisma } from '@/lib/db';
 import { sendCustomerOrderEmail, sendAdminOrderNotification } from '@/lib/email';
 
@@ -28,13 +27,13 @@ export async function POST(request: Request) {
       );
     }
 
-    // Find any existing product ID to use as a safe fallback foreign-key for custom/combo bundles
+    // Find any existing product in DB to use its ID as safe foreign-key for custom combo bundles
     let fallbackProductId: string | null = null;
     try {
       const anyProd = await prisma.product.findFirst({ select: { id: true } });
       if (anyProd) fallbackProductId = anyProd.id;
-    } catch (e) {
-      console.warn('[FALLBACK PRODUCT QUERY WARNING]', e);
+    } catch {
+      // Ignore
     }
 
     // Validate cart products and build verified order items
@@ -48,7 +47,6 @@ export async function POST(request: Request) {
     }> = [];
 
     for (const item of items) {
-      // Find product by ID, slug, or name
       let dbProduct: any = null;
       try {
         dbProduct = await prisma.product.findFirst({
@@ -60,11 +58,10 @@ export async function POST(request: Request) {
             ],
           },
         });
-      } catch (dbErr) {
-        console.warn('[PRODUCT LOOKUP WARNING]', dbErr);
+      } catch {
+        // Ignore lookup error
       }
 
-      // Determine product ID (must be a valid DB Product UUID if products exist in DB)
       const productId = dbProduct?.id || fallbackProductId || item.id;
       const productName = dbProduct?.name || item.name || 'Qayra Luxury Perfume';
       const itemPrice = typeof item.price === 'number' && item.price > 0 ? item.price : (dbProduct?.price || 1499);
@@ -92,7 +89,7 @@ export async function POST(request: Request) {
       });
     }
 
-    // Check if user account exists in DB for foreign key constraint
+    // Verify user account exists in DB for foreign-key safety
     let userId: string | null = null;
     try {
       const cookieStore = await cookies();
@@ -153,7 +150,7 @@ export async function POST(request: Request) {
       try {
         const priorOrderWithCoupon = await prisma.order.findFirst({
           where: {
-            couponCode: normalizedCode,
+            razorpayOrderId: { contains: normalizedCode },
             paymentStatus: { not: 'FAILED' },
             orderStatus: { not: 'CANCELLED' },
             OR: whereConditions,
@@ -184,169 +181,85 @@ export async function POST(request: Request) {
     // Generate unique order number (e.g. QYR-839201)
     const orderNumber = `QYR-${Math.floor(100000 + Math.random() * 900000)}`;
 
-    // Helper to safely create order in Prisma (with fallback if new columns not yet migrated)
-    const createOrderRecord = async (method: string, status: string, orderSt: string, fee: number) => {
+    // Store coupon in razorpayOrderId field for reliable single-use tracking without DB schema dependencies
+    const orderTrackingMeta = normalizedCode
+      ? `COUPON:${normalizedCode}`
+      : isCODOrder
+      ? 'COD'
+      : 'PREPAID';
+
+    // Create Order in Database
+    const newOrder = await prisma.order.create({
+      data: {
+        orderNumber,
+        userId,
+        customerName,
+        customerEmail,
+        customerPhone: customerPhone || '',
+        shippingAddress,
+        city: city || 'City',
+        state: state || 'State',
+        pincode,
+        totalAmount: finalTotalAmount,
+        paymentMethod: isCODOrder ? 'COD' : 'PREPAID',
+        paymentStatus: isCODOrder ? 'COD_PENDING' : 'PENDING',
+        orderStatus: 'PROCESSING',
+        razorpayOrderId: orderTrackingMeta,
+        items: {
+          create: verifiedOrderItems,
+        },
+      },
+      include: {
+        items: true,
+      },
+    });
+
+    // Safely decrement product stock
+    for (const item of verifiedOrderItems) {
       try {
-        return await prisma.order.create({
-          data: {
-            orderNumber,
-            userId,
-            customerName,
-            customerEmail,
-            customerPhone: customerPhone || '',
-            shippingAddress,
-            city: city || 'City',
-            state: state || 'State',
-            pincode,
-            totalAmount: finalTotalAmount,
-            paymentMethod: method,
-            paymentStatus: status,
-            orderStatus: orderSt,
-            couponCode: normalizedCode,
-            discountAmount,
-            codFee: fee,
-            razorpayOrderId: null,
-            items: {
-              create: verifiedOrderItems,
-            },
-          },
-          include: {
-            items: true,
-          },
+        await prisma.product.update({
+          where: { id: item.productId },
+          data: { stock: { decrement: item.quantity } },
         });
-      } catch (firstErr: any) {
-        console.warn('[ORDER CREATE FALLBACK WITHOUT OPTIONAL FIELDS]', firstErr?.message);
-        // Fallback for databases where couponCode/codFee columns may not exist yet
-        return await prisma.order.create({
-          data: {
-            orderNumber,
-            userId,
-            customerName,
-            customerEmail,
-            customerPhone: customerPhone || '',
-            shippingAddress,
-            city: city || 'City',
-            state: state || 'State',
-            pincode,
-            totalAmount: finalTotalAmount,
-            paymentMethod: method,
-            paymentStatus: status,
-            orderStatus: orderSt,
-            razorpayOrderId: null,
-            items: {
-              create: verifiedOrderItems,
-            },
-          },
-          include: {
-            items: true,
-          },
-        });
+      } catch {
+        // Safe to continue even if custom bundle ID
       }
+    }
+
+    // Dispatch instant email alerts
+    const emailPayload = {
+      orderNumber: newOrder.orderNumber,
+      customerName: newOrder.customerName,
+      customerEmail: newOrder.customerEmail,
+      customerPhone: newOrder.customerPhone,
+      shippingAddress: newOrder.shippingAddress,
+      city: newOrder.city,
+      state: newOrder.state,
+      pincode: newOrder.pincode,
+      totalAmount: newOrder.totalAmount,
+      paymentMethod: isCODOrder ? 'COD' : 'PREPAID',
+      items: newOrder.items.map((i) => ({
+        productName: i.productName,
+        quantity: i.quantity,
+        price: i.price,
+      })),
     };
 
-    // Handle Cash on Delivery (COD)
-    if (isCODOrder) {
-      const newOrder = await createOrderRecord('COD', 'COD_PENDING', 'PROCESSING', 50);
-
-      // Decrement product stock safely
-      for (const item of verifiedOrderItems) {
-        try {
-          await prisma.product.update({
-            where: { id: item.productId },
-            data: { stock: { decrement: item.quantity } },
-          });
-        } catch (stockErr) {
-          console.warn('[STOCK DECREMENT SKIPPED]', stockErr);
-        }
-      }
-
-      // Dispatch instant email alerts
-      const emailPayload = {
-        orderNumber: newOrder.orderNumber,
-        customerName: newOrder.customerName,
-        customerEmail: newOrder.customerEmail,
-        customerPhone: newOrder.customerPhone,
-        shippingAddress: newOrder.shippingAddress,
-        city: newOrder.city,
-        state: newOrder.state,
-        pincode: newOrder.pincode,
-        totalAmount: newOrder.totalAmount,
-        paymentMethod: 'COD',
-        items: newOrder.items.map((i) => ({
-          productName: i.productName,
-          quantity: i.quantity,
-          price: i.price,
-        })),
-      };
-
-      try {
-        await Promise.allSettled([
-          sendCustomerOrderEmail(emailPayload),
-          sendAdminOrderNotification(emailPayload),
-        ]);
-      } catch (e) {
-        console.error('[COD EMAIL DISPATCH ERROR]', e);
-      }
-
-      return NextResponse.json({
-        success: true,
-        order: newOrder,
-        isCOD: true,
-      });
+    try {
+      await Promise.allSettled([
+        sendCustomerOrderEmail(emailPayload),
+        sendAdminOrderNotification(emailPayload),
+      ]);
+    } catch (e) {
+      console.error('[EMAIL DISPATCH ERROR]', e);
     }
 
-    // Handle Prepaid (WhatsApp Payment Collection / UPI)
-    if (paymentMethod === 'PREPAID' || paymentMethod === 'ONLINE') {
-      const newOrder = await createOrderRecord('PREPAID', 'PENDING', 'PROCESSING', 0);
-
-      // Decrement product stock safely
-      for (const item of verifiedOrderItems) {
-        try {
-          await prisma.product.update({
-            where: { id: item.productId },
-            data: { stock: { decrement: item.quantity } },
-          });
-        } catch (stockErr) {
-          console.warn('[STOCK DECREMENT SKIPPED]', stockErr);
-        }
-      }
-
-      // Dispatch instant email alerts
-      const emailPayload = {
-        orderNumber: newOrder.orderNumber,
-        customerName: newOrder.customerName,
-        customerEmail: newOrder.customerEmail,
-        customerPhone: newOrder.customerPhone,
-        shippingAddress: newOrder.shippingAddress,
-        city: newOrder.city,
-        state: newOrder.state,
-        pincode: newOrder.pincode,
-        totalAmount: newOrder.totalAmount,
-        paymentMethod: 'PREPAID',
-        items: newOrder.items.map((i) => ({
-          productName: i.productName,
-          quantity: i.quantity,
-          price: i.price,
-        })),
-      };
-
-      try {
-        await Promise.allSettled([
-          sendCustomerOrderEmail(emailPayload),
-          sendAdminOrderNotification(emailPayload),
-        ]);
-      } catch (e) {
-        console.error('[PREPAID EMAIL DISPATCH ERROR]', e);
-      }
-
-      return NextResponse.json({
-        success: true,
-        order: newOrder,
-        isPrepaid: true,
-      });
-    }
-
-    return NextResponse.json({ error: 'Invalid payment method' }, { status: 400 });
+    return NextResponse.json({
+      success: true,
+      order: newOrder,
+      isCOD: isCODOrder,
+      isPrepaid: !isCODOrder,
+    });
   } catch (error: any) {
     console.error('Error creating checkout order:', error);
     return NextResponse.json(

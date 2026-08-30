@@ -73,9 +73,6 @@ model Order {
   paymentMethod    String      @default("ONLINE") // ONLINE, COD, PREPAID
   paymentStatus    String      @default("PENDING") // PENDING, PAID, FAILED, COD_PENDING
   orderStatus      String      @default("PENDING") // PENDING, PROCESSING, SHIPPED, DELIVERED, CANCELLED
-  couponCode       String?
-  discountAmount   Float?      @default(0)
-  codFee           Float?      @default(0)
   razorpayOrderId  String?
   razorpayPaymentId String?
   createdAt        DateTime    @default(now())
@@ -84,8 +81,6 @@ model Order {
 
   @@index([userId])
   @@index([customerEmail])
-  @@index([customerPhone])
-  @@index([couponCode])
   @@index([paymentStatus])
   @@index([orderStatus])
   @@index([createdAt])

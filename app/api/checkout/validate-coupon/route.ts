@@ -61,7 +61,7 @@ export async function POST(request: Request) {
       try {
         const existingOrder = await prisma.order.findFirst({
           where: {
-            couponCode: normalizedCode,
+            razorpayOrderId: { contains: normalizedCode },
             paymentStatus: { not: 'FAILED' },
             orderStatus: { not: 'CANCELLED' },
             OR: whereConditions,
