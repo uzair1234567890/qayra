@@ -36,7 +36,7 @@ export default async function OrderPage({ params }: OrderPageProps) {
   const whatsappMessage = encodeURIComponent(
     `Hi Qayra Parfums, I have placed prepaid order #${order.orderNumber} for ₹${order.totalAmount}. Please share the UPI payment QR / details so I can complete payment.`
   );
-  const whatsappUrl = `https://wa.me/918369389278?text=${whatsappMessage}`;
+  const whatsappUrl = `https://wa.me/919822929716?text=${whatsappMessage}`;
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-8 py-16 space-y-10">
