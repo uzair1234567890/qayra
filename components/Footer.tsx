@@ -137,6 +137,11 @@ export default function Footer() {
                 Track Order
               </Link>
             </li>
+            <li>
+              <Link href="/return-policy" className="hover:text-[#D4AF37] transition-colors">
+                Return & Refund Policy
+              </Link>
+            </li>
             {isAdmin && (
               <li>
                 <Link href="/admin" className="hover:text-[#D4AF37] transition-colors text-[#D4AF37] font-medium flex items-center gap-1">

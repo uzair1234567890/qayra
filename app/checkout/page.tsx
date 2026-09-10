@@ -539,6 +539,15 @@ export default function CheckoutPage() {
                 <CheckCircle2 className="w-3.5 h-3.5 text-[#52B788]" />
                 <span>Complimentary Express Shipping Across India</span>
               </div>
+              <div className="pt-1">
+                <Link
+                  href="/return-policy"
+                  target="_blank"
+                  className="text-[10px] text-[#787063] hover:text-[#D4AF37] underline transition-colors"
+                >
+                  View Return & Refund Policy
+                </Link>
+              </div>
             </div>
           </div>
         </div>
