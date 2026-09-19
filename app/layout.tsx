@@ -31,6 +31,9 @@ export const metadata: Metadata = {
     shortcut: '/favicon.ico',
     apple: '/apple-icon.png',
   },
+  verification: {
+    google: 'H5TyTi43Ak-rOxIqufsfUXypof2wBNTdgIxPa-izLXU',
+  },
 };
 
 export default function RootLayout({
@@ -41,6 +44,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`dark scroll-smooth ${serifFont.variable} ${sansFont.variable}`}>
       <head>
+        <meta name="google-site-verification" content="H5TyTi43Ak-rOxIqufsfUXypof2wBNTdgIxPa-izLXU" />
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-JH86SYJ595"
           strategy="afterInteractive"
