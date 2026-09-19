@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import Script from 'next/script';
 import { Cormorant_Garamond, Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
 import { CartProvider } from '@/components/CartContext';
@@ -45,18 +44,17 @@ export default function RootLayout({
     <html lang="en" className={`dark scroll-smooth ${serifFont.variable} ${sansFont.variable}`}>
       <head>
         <meta name="google-site-verification" content="H5TyTi43Ak-rOxIqufsfUXypof2wBNTdgIxPa-izLXU" />
-        <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-JH86SYJ595"
-          strategy="afterInteractive"
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-JH86SYJ595" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-JH86SYJ595');
+            `,
+          }}
         />
-        <Script id="google-analytics" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-JH86SYJ595');
-          `}
-        </Script>
       </head>
       <body className="bg-[#0A0908] text-[#FDFBF7] antialiased selection:bg-[#D4AF37] selection:text-[#0A0908]">
         <CartProvider>
