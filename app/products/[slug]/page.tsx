@@ -66,8 +66,13 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
               className="object-cover"
               sizes="(max-width: 1024px) 100vw, 50vw"
             />
-            <div className="absolute top-4 left-4 bg-[#1A1815]/90 backdrop-blur-md border border-[#C5A059]/50 text-[#D4AF37] text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded">
-              {product.scentFamily}
+            <div className="absolute top-4 left-4 flex flex-col space-y-1.5 z-10">
+              <span className="bg-[#1A1815]/90 backdrop-blur-md border border-[#C5A059]/50 text-[#D4AF37] text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded">
+                {product.scentFamily}
+              </span>
+              <span className="bg-[#0A0908]/90 backdrop-blur-md border border-[#29241F] text-[#FDFBF7] text-xs font-mono font-semibold uppercase tracking-wider px-2.5 py-1 rounded w-fit">
+                10ml Bottle
+              </span>
             </div>
           </div>
         </div>
@@ -94,7 +99,23 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
               </p>
             )}
 
-            <p className="text-xs sm:text-sm text-[#A0988E] leading-relaxed font-light pt-2">
+            {/* 10ml Bottle & Scent Specification Pills */}
+            <div className="flex flex-wrap items-center gap-2 pt-1 pb-1">
+              <div className="inline-flex items-center space-x-1.5 bg-[#1A1815] border border-[#D4AF37]/50 px-3 py-1.5 rounded-lg text-xs font-semibold text-[#D4AF37]">
+                <span>🧴</span>
+                <span>Bottle Size: 10ml</span>
+              </div>
+              <div className="inline-flex items-center space-x-1.5 bg-[#141210] border border-[#29241F] px-3 py-1.5 rounded-lg text-xs text-[#A0988E]">
+                <span>⏳</span>
+                <span>30-Day Diffusion</span>
+              </div>
+              <div className="inline-flex items-center space-x-1.5 bg-[#141210] border border-[#29241F] px-3 py-1.5 rounded-lg text-xs text-[#A0988E]">
+                <span>✨</span>
+                <span>Non-Alcoholic Pure Oil</span>
+              </div>
+            </div>
+
+            <p className="text-xs sm:text-sm text-[#D6D0C7] leading-relaxed font-light pt-2">
               {product.description}
             </p>
           </div>
@@ -140,13 +161,17 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
           />
 
           {/* Value Props Strip */}
-          <div className="grid grid-cols-2 gap-4 text-xs text-[#A0988E] pt-4 border-t border-[#29241F]">
-            <div className="flex items-center space-x-2">
-              <Truck className="w-4 h-4 text-[#D4AF37]" />
-              <span>Complimentary India Express Shipping</span>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-[#A0988E] pt-4 border-t border-[#29241F]">
+            <div className="flex items-center space-x-2 bg-[#141210] p-3 rounded-lg border border-[#29241F]">
+              <Sparkles className="w-4 h-4 text-[#D4AF37] shrink-0" />
+              <span>10ml Pure Fragrance Oil</span>
             </div>
-            <div className="flex items-center space-x-2">
-              <RefreshCw className="w-4 h-4 text-[#D4AF37]" />
+            <div className="flex items-center space-x-2 bg-[#141210] p-3 rounded-lg border border-[#29241F]">
+              <Truck className="w-4 h-4 text-[#D4AF37] shrink-0" />
+              <span>Free Express India Delivery</span>
+            </div>
+            <div className="flex items-center space-x-2 bg-[#141210] p-3 rounded-lg border border-[#29241F]">
+              <RefreshCw className="w-4 h-4 text-[#D4AF37] shrink-0" />
               <span>30-Day Fragrance Guarantee</span>
             </div>
           </div>

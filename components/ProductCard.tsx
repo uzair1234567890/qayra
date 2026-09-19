@@ -60,6 +60,9 @@ export default function ProductCard({
           <span className="bg-[#1A1815]/90 backdrop-blur-md text-[#D4AF37] border border-[#C5A059]/40 text-[8px] sm:text-[10px] uppercase tracking-wider px-2 sm:px-2.5 py-0.5 sm:py-1 rounded font-semibold">
             {scentFamily}
           </span>
+          <span className="bg-[#0A0908]/90 backdrop-blur-md text-[#FDFBF7] border border-[#29241F] text-[8px] sm:text-[9px] uppercase tracking-wider px-2 py-0.5 rounded font-mono font-medium w-fit">
+            10ml Bottle
+          </span>
         </div>
 
         {/* Low Stock Indicator */}
@@ -90,8 +93,8 @@ export default function ProductCard({
               <span className="font-semibold text-[10px] sm:text-xs text-[#FDFBF7]">{rating.toFixed(1)}</span>
               <span className="text-[#787063] text-[9px] sm:text-[10px]">({reviewsCount})</span>
             </div>
-            <span className="hidden sm:flex text-[10px] text-[#A0988E] uppercase tracking-widest items-center gap-1">
-              <Sparkles className="w-3 h-3 text-[#D4AF37]" /> 30-Day
+            <span className="flex text-[9px] sm:text-[10px] text-[#A0988E] uppercase tracking-wider items-center gap-1 font-medium">
+              <Sparkles className="w-3 h-3 text-[#D4AF37]" /> 10ml &bull; 30-Day
             </span>
           </div>
 

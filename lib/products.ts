@@ -8,6 +8,32 @@ interface CacheEntry<T> {
 const CACHE_TTL_MS = 60 * 1000; // 60 seconds TTL
 const memoryCache = new Map<string, CacheEntry<any>>();
 
+export const SIMPLE_PRODUCT_DESCRIPTIONS: Record<string, string> = {
+  'shadow-elixir':
+    'A rich, royal oud scent made for people who love deep woody fragrances. It blends natural agarwood (oud) with warm amber and a touch of saffron, giving your car a premium, luxurious smell that lasts 30+ days without any harsh chemical odor. Comes in a 10ml glass bottle with a handcrafted beechwood diffuser cap.',
+  'velvet-midnight':
+    'A warm, sweet amber and cedarwood fragrance that makes your car cabin feel cozy, calm, and welcoming. Blends smooth amber with soft cedarwood and a pinch of warm spices. Perfect for daily driving and evening rides. Comes in a 10ml glass bottle with a handcrafted beechwood diffuser cap.',
+  'smoked-vanilla-bourbon':
+    'A warm, sweet amber and cedarwood fragrance that makes your car cabin feel cozy, calm, and welcoming. Blends smooth amber with soft cedarwood and a pinch of warm spices. Perfect for daily driving and evening rides. Comes in a 10ml glass bottle with a handcrafted beechwood diffuser cap.',
+  'obsidian-mist':
+    'A bold, masculine fragrance inspired by luxury car leather upholstery and fine wood. Combines rich leather aroma with earthy oakmoss and a touch of black pepper for a powerful executive vibe. Comes in a 10ml glass bottle with a handcrafted beechwood diffuser cap.',
+  'sacred-nile':
+    'A crisp, fresh citrus fragrance that instantly lifts your driving mood. Made with zesty Italian bergamot, fresh orange notes, and clean musk to keep your car smelling naturally clean and fresh, even in hot Indian summers. Comes in a 10ml glass bottle with a handcrafted beechwood diffuser cap.',
+};
+
+export function getSimpleDescription(slug: string, currentDescription?: string | null): string {
+  if (SIMPLE_PRODUCT_DESCRIPTIONS[slug]) {
+    return SIMPLE_PRODUCT_DESCRIPTIONS[slug];
+  }
+  if (currentDescription) {
+    if (!currentDescription.toLowerCase().includes('10ml')) {
+      return `${currentDescription} Comes in a 10ml glass bottle with a handcrafted beechwood diffuser cap.`;
+    }
+    return currentDescription;
+  }
+  return 'Handcrafted 10ml hanging car perfume made with pure, non-alcoholic concentrated oils that gently diffuse for 30+ days through a porous beechwood cap.';
+}
+
 export function clearProductsCache() {
   memoryCache.clear();
 }
@@ -181,6 +207,7 @@ export async function getCachedProductBySlug(slug: string) {
     const result = {
       product: {
         ...product,
+        description: getSimpleDescription(product.slug, product.description),
         images: parsedImages,
       },
       primaryImage,
