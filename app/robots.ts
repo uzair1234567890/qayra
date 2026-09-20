@@ -16,6 +16,24 @@ export default function robots(): MetadataRoute.Robots {
           '/orders/',
         ],
       },
+      {
+        userAgent: [
+          'GPTBot',
+          'ChatGPT-User',
+          'Google-Extended',
+          'PerplexityBot',
+          'ClaudeBot',
+          'Applebot-Extended',
+        ],
+        allow: ['/', '/products', '/llms.txt'],
+        disallow: [
+          '/admin/',
+          '/api/',
+          '/account/',
+          '/checkout/',
+          '/orders/',
+        ],
+      },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,
   };

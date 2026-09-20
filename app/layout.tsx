@@ -55,6 +55,30 @@ export default function RootLayout({
             `,
           }}
         />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'Organization',
+              name: 'Qayra',
+              legalName: 'Qayra Luxury Fragrances',
+              url: 'https://qayra.in',
+              logo: 'https://qayra.in/icon.png',
+              description:
+                'Indian luxury fragrance house crafting 10ml concentrated, non-alcoholic hanging car perfumes with handcrafted beechwood diffuser caps for 30+ day vehicle cabin longevity.',
+              slogan: 'Crafted for the Discerning Drive',
+              foundingLocation: 'India',
+              contactPoint: {
+                '@type': 'ContactPoint',
+                telephone: '+91-9822929716',
+                contactType: 'customer service',
+                areaServed: 'IN',
+                availableLanguage: ['en', 'hi'],
+              },
+            }),
+          }}
+        />
       </head>
       <body className="bg-[#0A0908] text-[#FDFBF7] antialiased selection:bg-[#D4AF37] selection:text-[#0A0908]">
         <CartProvider>
