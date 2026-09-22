@@ -10,6 +10,7 @@ import FragranceQuiz from '@/components/FragranceQuiz';
 import GiftBundleSection from '@/components/GiftBundleSection';
 import HeroInteractiveBackground from '@/components/HeroInteractiveBackground';
 import RealisticHangingBottle from '@/components/RealisticHangingBottle';
+import HomeFAQ from '@/components/HomeFAQ';
 
 export const revalidate = 60; // Revalidate every minute
 
@@ -257,6 +258,11 @@ export default async function HomePage() {
             <ProductCard key={product.id} {...product} />
           ))}
         </div>
+      </section>
+
+      {/* Frequently Asked Questions Section & Schema */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-8 pt-6">
+        <HomeFAQ />
       </section>
     </div>
   );
