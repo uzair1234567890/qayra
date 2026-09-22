@@ -1,0 +1,11 @@
+---
+interface Props {
+  stockQty: number | null;
+}
+const { stockQty } = Astro.props;
+---
+{stockQty !== null && stockQty >= 1 && stockQty <= 10 && (
+  <span class="inline-block bg-champagne text-navy text-[10px] font-semibold uppercase tracking-widest px-2 py-0.5">
+    Only {stockQty} left
+  </span>
+)}

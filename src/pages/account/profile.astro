@@ -1,0 +1,58 @@
+---
+import PublicLayout from '../../layouts/PublicLayout.astro';
+import AccountNav from '../../components/account/AccountNav.astro';
+import { requireRole } from '../../lib/auth/session';
+import { serverClient } from '../../lib/supabase/server';
+
+const result = await requireRole(Astro as any, 'customer');
+if (result instanceof Response) return result;
+const supabase = serverClient(Astro.request, Astro.cookies);
+const { data: profile } = await supabase
+  .from('profiles')
+  .select('full_name, phone')
+  .eq('id', result.userId)
+  .single();
+const info = Astro.url.searchParams.get('info');
+const error = Astro.url.searchParams.get('error');
+---
+
+<PublicLayout title="Profile">
+  <section class="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-12 sm:px-6 md:flex-row">
+    <AccountNav />
+    <div class="max-w-md flex-1">
+      <h1 class="font-display mb-6 text-3xl font-light">Profile</h1>
+      {info && <p class="bg-champagne/20 border-champagne/40 mb-4 border p-3 text-sm">{info}</p>}
+      {
+        error && (
+          <p class="mb-4 border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>
+        )
+      }
+      <form action="/api/account/profile-update" method="post" class="space-y-3">
+        <label class="block">
+          <span class="sr-only">Full name</span>
+          <input
+            name="full_name"
+            placeholder="Full name"
+            value={profile?.full_name ?? ''}
+            required
+            class="border-navy/20 w-full border px-3 py-2"
+          />
+        </label>
+        <label class="block">
+          <span class="sr-only">Phone (10 digits)</span>
+          <input
+            name="phone"
+            placeholder="Phone (10 digits)"
+            pattern="[0-9]{10}"
+            value={profile?.phone ?? ''}
+            class="border-navy/20 w-full border px-3 py-2"
+          />
+        </label>
+        <p class="text-navy/50 text-xs">Email: {result.email} (cannot be changed)</p>
+        <button class="bg-navy text-cream px-6 py-3 text-xs tracking-widest uppercase">Save</button>
+      </form>
+      <hr class="border-navy/10 my-8" />
+      <a href="/auth/forgot-password" class="text-sm underline">Change password</a>
+    </div>
+  </section>
+</PublicLayout>

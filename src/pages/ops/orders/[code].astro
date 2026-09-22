@@ -1,0 +1,330 @@
+---
+import OpsLayout from '../../../layouts/OpsLayout.astro';
+import { requireRole } from '../../../lib/auth/session';
+import { getOrder, getShipment } from '../../../lib/admin/orders';
+import { formatINR } from '../../../lib/format';
+
+const result = await requireRole(Astro as any, 'operations');
+if (result instanceof Response) return result;
+
+const { code } = Astro.params;
+const order = await getOrder(code!);
+if (!order) return Astro.redirect('/ops');
+
+const shipment =
+  order.status === 'shipped' || order.status === 'delivered'
+    ? await getShipment(order.id)
+    : null;
+
+const info = Astro.url.searchParams.get('info');
+const errorMsg = Astro.url.searchParams.get('error');
+
+const addr = order.address_snapshot as Record<string, string> | null;
+
+const sortedHistory = [...(order.history ?? [])].sort(
+  (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+);
+
+const statusColors: Record<string, string> = {
+  pending: 'bg-yellow-900/40 text-yellow-300 border-yellow-700/50',
+  paid: 'bg-blue-900/40 text-blue-300 border-blue-700/50',
+  packed: 'bg-purple-900/40 text-purple-300 border-purple-700/50',
+  shipped: 'bg-cyan-900/40 text-cyan-300 border-cyan-700/50',
+  delivered: 'bg-green-900/40 text-green-300 border-green-700/50',
+  cancelled: 'bg-red-900/40 text-red-300 border-red-700/50',
+  returned: 'bg-orange-900/40 text-orange-300 border-orange-700/50',
+};
+
+const terminalStatuses = ['delivered', 'cancelled', 'returned'];
+---
+
+<OpsLayout title={`Order ${order.code}`}>
+  <div class="space-y-4">
+
+    {info && (
+      <div class="rounded border border-green-700/50 bg-green-900/30 px-4 py-3 text-sm text-green-300">
+        {decodeURIComponent(info)}
+      </div>
+    )}
+
+    {errorMsg && (
+      <div class="rounded border border-red-700/50 bg-red-900/30 px-4 py-3 text-sm text-red-300">
+        {decodeURIComponent(errorMsg)}
+      </div>
+    )}
+
+    <div class="flex flex-wrap items-start justify-between gap-3 rounded border border-[#2A3340] bg-[#1A2330] px-4 py-4">
+      <div class="space-y-1">
+        <h1 class="font-mono text-xl font-semibold text-[#E8ECF0]">{order.code}</h1>
+        <p class="text-xs text-[#8A9BB0]">
+          {new Date(order.created_at).toLocaleString('en-IN', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          })}
+        </p>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <span class={`rounded border px-2 py-0.5 text-xs font-semibold uppercase ${statusColors[order.status] ?? 'bg-[#2A3340] text-[#E8ECF0] border-[#2A3340]'}`}>
+          {order.status}
+        </span>
+        <span class="rounded border border-[#2A3340] bg-[#2A3340]/60 px-2 py-0.5 text-xs font-medium uppercase text-[#8A9BB0]">
+          {order.payment_method}
+        </span>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+
+      <div class="rounded border border-[#2A3340] bg-[#1A2330] px-4 py-4">
+        <h2 class="mb-3 text-xs font-semibold uppercase tracking-wider text-[#8A9BB0]">Customer</h2>
+        {order.profile ? (
+          <div class="space-y-1 text-sm text-[#E8ECF0]">
+            <p class="font-medium">{(order.profile as any).full_name ?? '—'}</p>
+            <p class="text-[#8A9BB0]">{(order.profile as any).email}</p>
+            {(order.profile as any).phone && (
+              <p class="text-[#8A9BB0]">{(order.profile as any).phone}</p>
+            )}
+          </div>
+        ) : (
+          <p class="text-sm text-[#8A9BB0]">No profile data</p>
+        )}
+      </div>
+
+      <div class="rounded border border-[#2A3340] bg-[#1A2330] px-4 py-4">
+        <h2 class="mb-3 text-xs font-semibold uppercase tracking-wider text-[#8A9BB0]">Delivery address</h2>
+        {addr ? (
+          <div class="space-y-0.5 text-sm text-[#E8ECF0]">
+            <p class="font-medium">{addr.name}</p>
+            <p>{addr.line1}{addr.line2 ? `, ${addr.line2}` : ''}</p>
+            <p>{addr.city}, {addr.state} – {addr.pincode}</p>
+            <p class="text-[#8A9BB0]">{addr.phone}</p>
+          </div>
+        ) : (
+          <p class="text-sm text-[#8A9BB0]">No address data</p>
+        )}
+      </div>
+    </div>
+
+    <div class="rounded border border-[#2A3340] bg-[#1A2330]">
+      <div class="border-b border-[#2A3340] px-4 py-3">
+        <h2 class="text-xs font-semibold uppercase tracking-wider text-[#8A9BB0]">Items</h2>
+      </div>
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-[#2A3340] text-left">
+            <th class="px-4 py-2 font-medium text-[#8A9BB0]">Name</th>
+            <th class="px-4 py-2 text-right font-medium text-[#8A9BB0]">Qty</th>
+            <th class="px-4 py-2 text-right font-medium text-[#8A9BB0]">Unit</th>
+            <th class="px-4 py-2 text-right font-medium text-[#8A9BB0]">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {(order.items ?? []).map((item: any) => (
+            <tr class="border-b border-[#2A3340]/50 last:border-0">
+              <td class="px-4 py-2 text-[#E8ECF0]">{item.name_snapshot}</td>
+              <td class="px-4 py-2 text-right text-[#E8ECF0]">{item.quantity}</td>
+              <td class="px-4 py-2 text-right text-[#8A9BB0]">{formatINR(item.price_snapshot)}</td>
+              <td class="px-4 py-2 text-right font-medium text-[#E8ECF0]">{formatINR(item.price_snapshot * item.quantity)}</td>
+            </tr>
+          ))}
+        </tbody>
+        <tfoot>
+          {order.discount_total > 0 && (
+            <tr class="border-t border-[#2A3340]/50">
+              <td colspan="3" class="px-4 py-1 text-right text-xs text-[#8A9BB0]">Discount</td>
+              <td class="px-4 py-1 text-right text-xs text-green-400">-{formatINR(order.discount_total)}</td>
+            </tr>
+          )}
+          {order.shipping_total > 0 && (
+            <tr>
+              <td colspan="3" class="px-4 py-1 text-right text-xs text-[#8A9BB0]">Shipping</td>
+              <td class="px-4 py-1 text-right text-xs text-[#E8ECF0]">{formatINR(order.shipping_total)}</td>
+            </tr>
+          )}
+          {order.cod_surcharge > 0 && (
+            <tr>
+              <td colspan="3" class="px-4 py-1 text-right text-xs text-[#8A9BB0]">COD surcharge</td>
+              <td class="px-4 py-1 text-right text-xs text-[#E8ECF0]">{formatINR(order.cod_surcharge)}</td>
+            </tr>
+          )}
+          <tr class="border-t border-[#2A3340]">
+            <td colspan="3" class="px-4 py-2 text-right font-semibold text-[#E8ECF0]">Total</td>
+            <td class="px-4 py-2 text-right font-bold text-[#E8ECF0]">{formatINR(order.total)}</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+
+      <div class="rounded border border-[#2A3340] bg-[#1A2330] px-4 py-4">
+        <h2 class="mb-3 text-xs font-semibold uppercase tracking-wider text-[#8A9BB0]">Status history</h2>
+        {sortedHistory.length === 0 ? (
+          <p class="text-sm text-[#8A9BB0]">No history yet</p>
+        ) : (
+          <ol class="space-y-3">
+            {sortedHistory.map((h: any) => (
+              <li class="flex gap-3 text-sm">
+                <div class="mt-0.5 flex flex-col items-center">
+                  <span class="h-2 w-2 rounded-full bg-[#4A5568]"></span>
+                </div>
+                <div>
+                  <span class={`rounded border px-1.5 py-0.5 text-xs font-semibold uppercase ${statusColors[h.status] ?? 'bg-[#2A3340] text-[#E8ECF0] border-[#2A3340]'}`}>
+                    {h.status}
+                  </span>
+                  <p class="mt-0.5 text-xs text-[#8A9BB0]">
+                    {new Date(h.created_at).toLocaleString('en-IN', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </p>
+                  {h.note && <p class="mt-0.5 text-xs text-[#8A9BB0] italic">{h.note}</p>}
+                </div>
+              </li>
+            ))}
+          </ol>
+        )}
+      </div>
+
+      <div class="space-y-4">
+
+        {order.status === 'paid' && (
+          <div class="rounded border border-blue-700/50 bg-[#1A2330] px-4 py-4">
+            <h2 class="mb-3 text-xs font-semibold uppercase tracking-wider text-[#8A9BB0]">Action</h2>
+            <p class="mb-3 text-sm text-[#E8ECF0]">Mark this order as packed and ready for dispatch.</p>
+            <form method="POST" action="/api/ops/mark-packed" data-astro-reload>
+              <input type="hidden" name="order_id" value={order.id} />
+              <button
+                type="submit"
+                class="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 active:bg-blue-700"
+              >
+                Mark packed
+              </button>
+            </form>
+          </div>
+        )}
+
+        {order.status === 'packed' && (
+          <div class="rounded border border-purple-700/50 bg-[#1A2330] px-4 py-4">
+            <h2 class="mb-3 text-xs font-semibold uppercase tracking-wider text-[#8A9BB0]">Enter AWB</h2>
+            <form method="POST" action="/api/ops/enter-awb" class="space-y-3" data-astro-reload>
+              <input type="hidden" name="order_id" value={order.id} />
+              <div>
+                <label class="mb-1 block text-xs text-[#8A9BB0]" for="courier_name">Courier name</label>
+                <input
+                  id="courier_name"
+                  name="courier_name"
+                  type="text"
+                  required
+                  maxlength="80"
+                  placeholder="e.g. Delhivery"
+                  class="w-full rounded border border-[#2A3340] bg-[#0F1620] px-3 py-2 text-sm text-[#E8ECF0] placeholder-[#4A5568] focus:border-purple-500 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label class="mb-1 block text-xs text-[#8A9BB0]" for="awb_number">AWB number</label>
+                <input
+                  id="awb_number"
+                  name="awb_number"
+                  type="text"
+                  required
+                  minlength="3"
+                  maxlength="60"
+                  placeholder="Tracking number"
+                  class="w-full rounded border border-[#2A3340] bg-[#0F1620] px-3 py-2 text-sm text-[#E8ECF0] placeholder-[#4A5568] focus:border-purple-500 focus:outline-none"
+                />
+              </div>
+              <button
+                type="submit"
+                class="rounded bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-500 active:bg-purple-700"
+              >
+                Ship order
+              </button>
+            </form>
+          </div>
+        )}
+
+        {order.status === 'shipped' && (
+          <div class="rounded border border-cyan-700/50 bg-[#1A2330] px-4 py-4">
+            <h2 class="mb-3 text-xs font-semibold uppercase tracking-wider text-[#8A9BB0]">Action</h2>
+            <p class="mb-3 text-sm text-[#E8ECF0]">Confirm delivery once customer has received the order.</p>
+            <form method="POST" action="/api/ops/mark-delivered" data-astro-reload>
+              <input type="hidden" name="order_id" value={order.id} />
+              <button
+                type="submit"
+                class="rounded bg-cyan-600 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-500 active:bg-cyan-700"
+              >
+                Mark delivered
+              </button>
+            </form>
+          </div>
+        )}
+
+        {terminalStatuses.includes(order.status) && (
+          <div class="rounded border border-[#2A3340] bg-[#1A2330] px-4 py-4">
+            <h2 class="mb-2 text-xs font-semibold uppercase tracking-wider text-[#8A9BB0]">Status</h2>
+            <p class="text-sm text-[#8A9BB0]">
+              This order is <strong class="text-[#E8ECF0]">{order.status}</strong>. No further actions available.
+            </p>
+          </div>
+        )}
+
+        {shipment && (
+          <div class="rounded border border-[#2A3340] bg-[#1A2330] px-4 py-4">
+            <h2 class="mb-3 text-xs font-semibold uppercase tracking-wider text-[#8A9BB0]">Shipment</h2>
+            <dl class="space-y-1 text-sm">
+              <div class="flex gap-2">
+                <dt class="w-28 text-[#8A9BB0]">Courier</dt>
+                <dd class="font-medium text-[#E8ECF0]">{shipment.courier_name}</dd>
+              </div>
+              <div class="flex gap-2">
+                <dt class="w-28 text-[#8A9BB0]">AWB</dt>
+                <dd class="font-mono text-[#E8ECF0]">{shipment.awb_number}</dd>
+              </div>
+              {shipment.dispatched_at && (
+                <div class="flex gap-2">
+                  <dt class="w-28 text-[#8A9BB0]">Dispatched</dt>
+                  <dd class="text-[#E8ECF0]">
+                    {new Date(shipment.dispatched_at).toLocaleString('en-IN', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </dd>
+                </div>
+              )}
+              {shipment.delivered_at && (
+                <div class="flex gap-2">
+                  <dt class="w-28 text-[#8A9BB0]">Delivered</dt>
+                  <dd class="text-[#E8ECF0]">
+                    {new Date(shipment.delivered_at).toLocaleString('en-IN', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </dd>
+                </div>
+              )}
+            </dl>
+          </div>
+        )}
+
+      </div>
+    </div>
+
+    <div class="pt-2">
+      <a href="/ops" class="text-sm text-[#8A9BB0] hover:text-[#E8ECF0]">&larr; Back to queue</a>
+    </div>
+
+  </div>
+</OpsLayout>

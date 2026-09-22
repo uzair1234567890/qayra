@@ -1,0 +1,85 @@
+---
+import PublicLayout from '../../layouts/PublicLayout.astro';
+import AccountNav from '../../components/account/AccountNav.astro';
+import { requireRole } from '../../lib/auth/session';
+import { serverClient } from '../../lib/supabase/server';
+
+const result = await requireRole(Astro as any, 'customer');
+if (result instanceof Response) return result;
+const supabase = serverClient(Astro.request, Astro.cookies);
+
+const { data: pending } = await supabase
+  .from('orders')
+  .select('id, code, order_items(scent_id, name_snapshot, scent:scents(slug, name))')
+  .eq('profile_id', result.userId)
+  .eq('status', 'delivered')
+  .order('created_at', { ascending: false });
+
+const { data: mine } = await supabase
+  .from('reviews')
+  .select('order_id, scent_id, rating, status, created_at, scent:scents(slug, name)')
+  .eq('profile_id', result.userId)
+  .order('created_at', { ascending: false });
+
+const reviewedSet = new Set((mine ?? []).map((r) => `${r.order_id ?? ''}:${r.scent_id ?? ''}`));
+
+type OrderItem = { scent_id: string | null; name_snapshot: string; scent: { slug: string; name: string } | null };
+type PendingOrder = { id: string; code: string; order_items: OrderItem[] };
+type Review = { order_id: string | null; scent_id: string | null; rating: number; status: string; scent: { slug: string; name: string } | null };
+---
+
+<PublicLayout title="My reviews">
+  <section class="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-12 sm:px-6 md:flex-row">
+    <AccountNav />
+    <div class="flex-1 space-y-10">
+      <div>
+        <h1 class="font-display mb-4 text-3xl font-light">Awaiting your review</h1>
+        {
+          (pending ?? []).length === 0 ? (
+            <p class="text-navy/70">Nothing waiting.</p>
+          ) : (
+            <ul class="space-y-3">
+              {(pending as PendingOrder[] ?? []).flatMap((o) =>
+                o.order_items
+                  .filter((it) => !reviewedSet.has(`${o.id}:${it.scent_id ?? ''}`))
+                  .map((it) => (
+                    <li class="border-navy/10 flex items-center justify-between border bg-white p-4">
+                      <span>
+                        {it.scent?.name ?? it.name_snapshot}{' '}
+                        <span class="text-navy/50 ml-2 text-xs">{o.code}</span>
+                      </span>
+                      <a
+                        href={`/product/${it.scent?.slug}?review_order=${o.code}`}
+                        class="bg-navy text-cream px-4 py-2 text-xs tracking-widest uppercase"
+                      >
+                        Write review
+                      </a>
+                    </li>
+                  )),
+              )}
+            </ul>
+          )
+        }
+      </div>
+      <div>
+        <h2 class="font-display mb-4 text-2xl font-light">My reviews</h2>
+        {
+          (mine ?? []).length === 0 ? (
+            <p class="text-navy/70">None yet.</p>
+          ) : (
+            <ul class="space-y-2">
+              {(mine as Review[] ?? []).map((r) => (
+                <li class="border-navy/10 flex justify-between border bg-white p-3 text-sm">
+                  <span>
+                    {r.scent?.name} — {r.rating}★
+                  </span>
+                  <span class="text-navy/50 text-xs tracking-widest uppercase">{r.status}</span>
+                </li>
+              ))}
+            </ul>
+          )
+        }
+      </div>
+    </div>
+  </section>
+</PublicLayout>

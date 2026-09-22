@@ -1,0 +1,127 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import DangerZone from '../../../components/admin/DangerZone.astro';
+import { requireRole } from '../../../lib/auth/session';
+import { getDiscount } from '../../../lib/admin/discounts';
+
+const result = await requireRole(Astro as any, 'admin');
+if (result instanceof Response) return result;
+
+const discount = await getDiscount(Astro.params.code!);
+if (!discount) return Astro.redirect('/admin/discounts', 302);
+
+const info = Astro.url.searchParams.get('info');
+const error = Astro.url.searchParams.get('error');
+
+// Convert stored value back to display value for the form
+// percent: stored as whole integer, displayed as-is
+// fixed: stored as paise, displayed as rupees
+const displayValue = discount.type === 'fixed' ? discount.value / 100 : discount.value;
+
+// Convert UTC ISO datetime strings to datetime-local format in IST (Asia/Kolkata, UTC+5:30).
+// 'sv-SE' locale outputs ISO-style "YYYY-MM-DD HH:MM:SS"; slicing + replacing space gives datetime-local value.
+function toDatetimeLocal(iso: string | null): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
+  return d.toLocaleString('sv-SE', { timeZone: 'Asia/Kolkata' }).slice(0, 16).replace(' ', 'T');
+}
+---
+
+<AdminLayout title={`Edit: ${discount.code}`}>
+  {info && <p class="mb-4 rounded border border-green-200 bg-green-50 p-3 text-sm text-[#0A8A00]">{info}</p>}
+  {error && <p class="mb-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-[#C44]">{error}</p>}
+
+  <form action="/api/admin/discount-update" method="post" class="max-w-md space-y-4">
+    <input type="hidden" name="original_code" value={discount.code} />
+    <div>
+      <label class="mb-1 block text-xs font-medium text-[#444]">Code (uppercase, A–Z 0–9 _ -)</label>
+      <input
+        name="code"
+        required
+        pattern="[A-Z0-9_-]{3,40}"
+        value={discount.code}
+        class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm font-mono uppercase"
+      />
+    </div>
+    <div>
+      <label class="mb-1 block text-xs font-medium text-[#444]">Type</label>
+      <select name="type" class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm">
+        <option value="percent" selected={discount.type === 'percent'}>Percent off</option>
+        <option value="fixed" selected={discount.type === 'fixed'}>Fixed amount off (₹)</option>
+      </select>
+    </div>
+    <div>
+      <label class="mb-1 block text-xs font-medium text-[#444]">Value (% or ₹ depending on type)</label>
+      <input
+        name="value_input"
+        type="number"
+        required
+        min="1"
+        value={displayValue}
+        class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm font-mono"
+      />
+    </div>
+    <div>
+      <label class="mb-1 block text-xs font-medium text-[#444]">Minimum order (₹, 0 = no minimum)</label>
+      <input
+        name="min_subtotal_rupees"
+        type="number"
+        required
+        min="0"
+        value={discount.min_subtotal / 100}
+        class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm font-mono"
+      />
+    </div>
+    <div>
+      <label class="mb-1 block text-xs font-medium text-[#444]">Max uses (blank = unlimited)</label>
+      <input
+        name="max_uses"
+        type="number"
+        min="1"
+        value={discount.max_uses ?? ''}
+        class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm font-mono"
+      />
+    </div>
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="mb-1 block text-xs font-medium text-[#444]">Active from</label>
+        <input
+          name="active_from"
+          type="datetime-local"
+          value={toDatetimeLocal(discount.active_from)}
+          class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm"
+        />
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-[#444]">Active until</label>
+        <input
+          name="active_until"
+          type="datetime-local"
+          value={toDatetimeLocal(discount.active_until)}
+          class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm"
+        />
+      </div>
+    </div>
+    <div class="text-xs text-[#888]">
+      Used {discount.used_count} time{discount.used_count !== 1 ? 's' : ''} so far.
+    </div>
+    <button type="submit" class="rounded bg-[#1A1A1A] px-5 py-2 text-sm text-white">Save changes</button>
+  </form>
+
+  <div class="mt-8">
+    <DangerZone>
+      <p class="mb-3 text-sm text-[#444]">Permanently delete this discount code. This cannot be undone.</p>
+      <form action="/api/admin/discount-delete" method="post">
+        <input type="hidden" name="code" value={discount.code} />
+        <button
+          type="submit"
+          class="rounded border border-[#C44] px-4 py-1.5 text-xs text-[#C44] hover:bg-[#C44] hover:text-white"
+          onclick="return confirm('Delete discount code ' + this.form.code.value + '? This cannot be undone.')"
+        >
+          Delete discount
+        </button>
+      </form>
+    </DangerZone>
+  </div>
+</AdminLayout>

@@ -1,0 +1,16 @@
+---
+interface Props {
+  label: string;
+  value: string;
+  delta?: string;
+  deltaDirection?: 'up' | 'down' | 'flat';
+}
+const { label, value, delta, deltaDirection = 'flat' } = Astro.props;
+const color = { up: 'text-[#0A8A00]', down: 'text-[#C44]', flat: 'text-[#888]' }[deltaDirection];
+---
+
+<div class="rounded border border-[#EAEAEA] bg-white p-4">
+  <p class="text-[9px] tracking-widest text-[#888] uppercase">{label}</p>
+  <p class="mt-1 font-mono text-2xl font-semibold">{value}</p>
+  {delta && <p class:list={['mt-1 text-xs', color]}>{delta}</p>}
+</div>

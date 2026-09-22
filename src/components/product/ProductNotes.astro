@@ -1,0 +1,41 @@
+---
+import type { Scent } from '../../lib/catalog';
+interface Props {
+  scent: Scent;
+}
+const { scent } = Astro.props;
+---
+
+<div class="border-navy/10 border bg-white p-5">
+  <p class="font-display mb-3 text-lg">Scent notes</p>
+  {
+    scent.top_notes && (
+      <div class="mb-2 flex gap-3 text-sm">
+        <span class="text-champagne min-w-[60px] pt-0.5 text-xs tracking-widest uppercase">
+          Top
+        </span>
+        <span class="text-navy/80">{scent.top_notes}</span>
+      </div>
+    )
+  }
+  {
+    scent.heart_notes && (
+      <div class="mb-2 flex gap-3 text-sm">
+        <span class="text-champagne min-w-[60px] pt-0.5 text-xs tracking-widest uppercase">
+          Heart
+        </span>
+        <span class="text-navy/80">{scent.heart_notes}</span>
+      </div>
+    )
+  }
+  {
+    scent.base_notes && (
+      <div class="flex gap-3 text-sm">
+        <span class="text-champagne min-w-[60px] pt-0.5 text-xs tracking-widest uppercase">
+          Base
+        </span>
+        <span class="text-navy/80">{scent.base_notes}</span>
+      </div>
+    )
+  }
+</div>

@@ -1,0 +1,90 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import StatusPill from '../../../components/admin/StatusPill.astro';
+import { requireRole } from '../../../lib/auth/session';
+import { getCustomer } from '../../../lib/admin/customers';
+import { formatINR } from '../../../lib/format';
+
+const result = await requireRole(Astro as any, 'admin');
+if (result instanceof Response) return result;
+
+if (!Astro.params.id) return Astro.redirect('/admin/customers', 302);
+const customer = await getCustomer(Astro.params.id);
+if (!customer) return Astro.redirect('/admin/customers', 302);
+
+const { lifeSpend } = customer;
+---
+
+<AdminLayout title={customer.full_name ?? customer.email}>
+  <div class="mb-4 text-xs text-[#666]">
+    <a href="/admin/customers" class="text-[#0066CC]">← Customers</a>
+  </div>
+
+  <div class="grid gap-4 md:grid-cols-3">
+    <!-- Left: customer info -->
+    <div class="space-y-4">
+      <div class="rounded border border-[#EAEAEA] bg-white p-4">
+        <h3 class="mb-3 text-sm font-semibold">Customer</h3>
+        <dl class="space-y-1 text-xs">
+          <div class="flex justify-between"><dt class="text-[#888]">Name</dt><dd>{customer.full_name ?? '—'}</dd></div>
+          <div class="flex justify-between"><dt class="text-[#888]">Email</dt><dd>{customer.email}</dd></div>
+          <div class="flex justify-between"><dt class="text-[#888]">Phone</dt><dd>{customer.phone ?? '—'}</dd></div>
+          <div class="flex justify-between"><dt class="text-[#888]">Role</dt><dd>{customer.role}</dd></div>
+          <div class="flex justify-between"><dt class="text-[#888]">Joined</dt><dd>{customer.joined ? new Date(customer.joined).toLocaleDateString('en-IN') : '—'}</dd></div>
+          <div class="flex justify-between"><dt class="text-[#888]">Orders</dt><dd>{customer.orders.length}</dd></div>
+          <div class="flex justify-between"><dt class="text-[#888]">Lifetime spend</dt><dd class="font-mono">{formatINR(lifeSpend)}</dd></div>
+        </dl>
+      </div>
+
+      {customer.addresses.length > 0 && (
+        <div class="rounded border border-[#EAEAEA] bg-white p-4">
+          <h3 class="mb-3 text-sm font-semibold">Addresses</h3>
+          <div class="space-y-3">
+            {customer.addresses.map((a) => (
+              <div class="text-xs">
+                {a.is_default && <span class="mb-1 inline-block rounded-full bg-[#E8F5E9] px-2 py-0.5 text-[10px] text-[#0A8A00]">Default</span>}
+                <p class="font-medium">{a.name}</p>
+                <p class="text-[#666]">{a.line1}{a.line2 ? `, ${a.line2}` : ''}</p>
+                <p class="text-[#666]">{a.city}, {a.state} {a.pincode}</p>
+                <p class="text-[#666]">{a.phone}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+
+    <!-- Right: orders -->
+    <div class="md:col-span-2">
+      <div class="rounded border border-[#EAEAEA] bg-white p-4">
+        <h3 class="mb-3 text-sm font-semibold">Orders ({customer.orders.length})</h3>
+        {customer.orders.length === 0 ? (
+          <p class="text-sm text-[#888]">No orders yet.</p>
+        ) : (
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-[10px] uppercase tracking-widest text-[#888]">
+                <th class="py-1 text-left">Code</th>
+                <th class="text-left">Status</th>
+                <th class="text-right">Total</th>
+                <th class="text-right">Date</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {customer.orders.map((o) => (
+                <tr class="border-t border-[#F4F4F4]">
+                  <td class="py-1.5 font-mono text-xs">{o.code}</td>
+                  <td><StatusPill value={o.status} /></td>
+                  <td class="text-right font-mono text-xs">{formatINR(o.total)}</td>
+                  <td class="text-right text-xs">{new Date(o.created_at).toLocaleDateString('en-IN')}</td>
+                  <td class="text-right text-xs pl-2"><a href={`/admin/orders/${o.code}`} class="text-[#0066CC]">View</a></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  </div>
+</AdminLayout>

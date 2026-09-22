@@ -1,0 +1,140 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import DangerZone from '../../../components/admin/DangerZone.astro';
+import { requireRole } from '../../../lib/auth/session';
+import { getOffer } from '../../../lib/admin/offers';
+import { listActiveScentsForSelect } from '../../../lib/admin/scents';
+
+const result = await requireRole(Astro as any, 'admin');
+if (result instanceof Response) return result;
+
+const offer = await getOffer(Astro.params.id!);
+if (!offer) return Astro.redirect('/admin/offers', 302);
+
+const scents = await listActiveScentsForSelect();
+
+const info = Astro.url.searchParams.get('info');
+const error = Astro.url.searchParams.get('error');
+
+const rule = (offer.rule_json ?? {}) as Record<string, unknown>;
+const currentKind = (rule?.kind as string) ?? 'free_shipping';
+const minSubtotalRupees = currentKind === 'free_shipping' ? (typeof rule.min_subtotal === 'number' ? rule.min_subtotal : 0) / 100 : 0;
+const scentId = currentKind === 'buy_x_get_y_pct' ? (typeof rule.scent_id === 'string' ? rule.scent_id : '') : '';
+const minQty = currentKind === 'buy_x_get_y_pct' ? (typeof rule.min_qty === 'number' ? rule.min_qty : 2) : 2;
+const pctOffExtra = currentKind === 'buy_x_get_y_pct' ? (typeof rule.pct_off_extra === 'number' ? rule.pct_off_extra : 50) : 50;
+---
+
+<AdminLayout title={`Edit: ${offer.name}`}>
+  {info && <p class="mb-4 rounded border border-green-200 bg-green-50 p-3 text-sm text-[#0A8A00]">{info}</p>}
+  {error && <p class="mb-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-[#C44]">{error}</p>}
+
+  <form action="/api/admin/offer-update" method="post" class="max-w-md space-y-4">
+    <input type="hidden" name="id" value={offer.id} />
+    <div>
+      <label class="mb-1 block text-xs font-medium text-[#444]">Name</label>
+      <input
+        name="name"
+        required
+        maxlength="100"
+        value={offer.name}
+        class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm"
+      />
+    </div>
+    <div>
+      <label class="mb-1 block text-xs font-medium text-[#444]">
+        <input type="checkbox" name="active" value="true" checked={offer.active} />
+        Active
+      </label>
+    </div>
+    <div>
+      <label class="mb-1 block text-xs font-medium text-[#444]">Rule type</label>
+      <select name="kind" id="kind-select" class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm">
+        <option value="free_shipping" selected={currentKind === 'free_shipping'}>Free shipping</option>
+        <option value="buy_x_get_y_pct" selected={currentKind === 'buy_x_get_y_pct'}>Buy X get Y% off</option>
+      </select>
+    </div>
+
+    <fieldset
+      id="fields-free-shipping"
+      class="space-y-4"
+      style={`border:none;padding:0;margin:0${currentKind !== 'free_shipping' ? ';display:none' : ''}`}
+    >
+      <div>
+        <label class="mb-1 block text-xs font-medium text-[#444]">Min order (₹)</label>
+        <input
+          name="min_subtotal_rupees"
+          type="number"
+          min="0"
+          value={minSubtotalRupees}
+          class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm"
+        />
+      </div>
+    </fieldset>
+
+    <fieldset
+      id="fields-buy-x-get-y"
+      class="space-y-4"
+      style={`border:none;padding:0;margin:0${currentKind !== 'buy_x_get_y_pct' ? ';display:none' : ''}`}
+    >
+      <div>
+        <label class="mb-1 block text-xs font-medium text-[#444]">Scent</label>
+        <select name="scent_id" class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm">
+          {(scents ?? []).map((s) => (
+            <option value={s.id} selected={s.id === scentId}>{s.name}</option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-[#444]">Min qty</label>
+        <input
+          name="min_qty"
+          type="number"
+          min="2"
+          value={minQty}
+          class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm"
+        />
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-[#444]">% off extra item</label>
+        <input
+          name="pct_off_extra"
+          type="number"
+          min="1"
+          max="100"
+          value={pctOffExtra}
+          class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm"
+        />
+      </div>
+    </fieldset>
+
+    <button type="submit" class="rounded bg-[#1A1A1A] px-5 py-2 text-sm text-white">Save changes</button>
+  </form>
+
+  <div class="mt-8">
+    <DangerZone>
+      <p class="mb-3 text-sm text-[#444]">Permanently delete this offer. This cannot be undone.</p>
+      <form action="/api/admin/offer-delete" method="post">
+        <input type="hidden" name="id" value={offer.id} />
+        <button
+          type="submit"
+          class="rounded border border-[#C44] px-4 py-1.5 text-xs text-[#C44] hover:bg-[#C44] hover:text-white"
+          onclick="return confirm('Delete this offer? This cannot be undone.')"
+        >
+          Delete offer
+        </button>
+      </form>
+    </DangerZone>
+  </div>
+</AdminLayout>
+
+<script>
+  const sel = document.getElementById('kind-select') as HTMLSelectElement;
+  const fsFS = document.getElementById('fields-free-shipping') as HTMLFieldSetElement;
+  const fsBXY = document.getElementById('fields-buy-x-get-y') as HTMLFieldSetElement;
+  function update() {
+    fsFS.style.display = sel.value === 'free_shipping' ? '' : 'none';
+    fsBXY.style.display = sel.value === 'buy_x_get_y_pct' ? '' : 'none';
+  }
+  sel.addEventListener('change', update);
+  update();
+</script>

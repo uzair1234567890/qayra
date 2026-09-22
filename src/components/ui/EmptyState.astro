@@ -1,0 +1,24 @@
+---
+interface Props {
+  title: string;
+  body?: string;
+  cta?: { href: string; label: string };
+}
+const { title, body, cta } = Astro.props;
+---
+
+<div class="py-16 text-center">
+  <p class="font-display text-navy/40 mb-2 text-3xl">·</p>
+  <p class="font-display mb-2 text-xl">{title}</p>
+  {body && <p class="text-navy/60 mx-auto mb-4 max-w-sm text-sm">{body}</p>}
+  {
+    cta && (
+      <a
+        href={cta.href}
+        class="bg-navy text-cream inline-block px-5 py-3 text-xs tracking-widest uppercase"
+      >
+        {cta.label}
+      </a>
+    )
+  }
+</div>

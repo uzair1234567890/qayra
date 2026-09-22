@@ -1,0 +1,102 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { requireRole } from '../../lib/auth/session';
+import { listTeam } from '../../lib/admin/team';
+
+const result = await requireRole(Astro as any, 'admin');
+if (result instanceof Response) return result;
+
+const members = await listTeam();
+const info = Astro.url.searchParams.get('info');
+const error = Astro.url.searchParams.get('error');
+
+function formatDate(iso: string | null): string {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+---
+
+<AdminLayout title="Team">
+  {info && <p class="mb-4 rounded border border-green-200 bg-green-50 p-3 text-sm text-[#0A8A00]">{info}</p>}
+  {error && <p class="mb-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-[#C44]">{error}</p>}
+
+  <div class="mb-6 rounded border border-[#EAEAEA] bg-white p-4">
+    <h2 class="mb-3 text-sm font-medium text-[#1A1A1A]">Invite team member</h2>
+    <form action="/api/admin/team-grant-role" method="post" class="flex flex-wrap items-end gap-3">
+      <div class="flex flex-col gap-1">
+        <label for="email" class="text-xs text-[#888]">Email</label>
+        <input
+          id="email"
+          type="email"
+          name="email"
+          required
+          placeholder="colleague@example.com"
+          class="rounded border border-[#DDDDD8] px-3 py-1.5 text-sm w-64"
+        />
+      </div>
+      <div class="flex flex-col gap-1">
+        <label for="role" class="text-xs text-[#888]">Role</label>
+        <select
+          id="role"
+          name="role"
+          class="rounded border border-[#DDDDD8] px-3 py-1.5 text-sm"
+        >
+          <option value="operations">operations</option>
+          <option value="admin">admin</option>
+        </select>
+      </div>
+      <button type="submit" class="rounded bg-[#1A1A1A] px-4 py-1.5 text-sm text-white">
+        Grant role
+      </button>
+    </form>
+  </div>
+
+  {members.length === 0 ? (
+    <p class="text-sm text-[#888]">No team members yet.</p>
+  ) : (
+    <div class="rounded border border-[#EAEAEA] bg-white">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-[#EAEAEA] text-left text-[10px] tracking-widest text-[#888] uppercase">
+            <th class="px-3 py-2">Name / ID</th>
+            <th class="px-3 py-2">Role</th>
+            <th class="px-3 py-2">Joined</th>
+            <th class="px-3 py-2"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {members.map((m) => (
+            <tr class="border-t border-[#F4F4F4]">
+              <td class="px-3 py-2 font-mono text-xs text-[#444]">
+                {m.full_name || m.id}
+              </td>
+              <td class="px-3 py-2">
+                {m.role === 'admin' ? (
+                  <span class="rounded-full bg-[#1A1A1A] px-2 py-0.5 text-xs font-medium text-white">
+                    admin
+                  </span>
+                ) : (
+                  <span class="rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700">
+                    operations
+                  </span>
+                )}
+              </td>
+              <td class="px-3 py-2 text-xs text-[#888]">{formatDate(m.created_at)}</td>
+              <td class="px-3 py-2">
+                <form action="/api/admin/team-revoke-role" method="post">
+                  <input type="hidden" name="profile_id" value={m.id} />
+                  <button
+                    type="submit"
+                    class="rounded border border-[#DDDDD8] px-3 py-1 text-xs text-[#444] hover:border-red-300 hover:text-red-600"
+                  >
+                    Revoke
+                  </button>
+                </form>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )}
+</AdminLayout>

@@ -1,0 +1,33 @@
+---
+import { formatINR } from '../../lib/format';
+import type { Scent } from '../../lib/catalog';
+interface Props {
+  scent: Scent;
+}
+const { scent } = Astro.props;
+const img = scent.image_urls[0] ?? null;
+---
+
+<a href={`/product/${scent.slug}`} class="scent-card group bg-cream/0 block">
+  <div class="bg-aubergine/20 relative mb-3 aspect-square overflow-hidden">
+    {
+      img ? (
+        <img
+          src={img}
+          alt={scent.name}
+          width="600"
+          height="600"
+          loading="lazy"
+          class="ease-qa-out h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+        />
+      ) : (
+        <div class="from-aubergine via-navy to-near-black absolute inset-0 bg-gradient-to-br" />
+      )
+    }
+  </div>
+  <p class="scent-name font-display text-navy text-xl">{scent.name}</p>
+  <p class="text-navy/60 mt-1 text-xs">{formatINR(scent.base_price)}</p>
+  <p class="text-champagne mt-3 text-xs tracking-widest uppercase group-hover:underline">
+    Shop {scent.name.split(' ')[0]} →
+  </p>
+</a>

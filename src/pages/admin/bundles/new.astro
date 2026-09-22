@@ -1,0 +1,44 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import ImageUploadField from '../../../components/admin/ImageUploadField.astro';
+import { requireRole } from '../../../lib/auth/session';
+import { listScents } from '../../../lib/admin/scents';
+
+const result = await requireRole(Astro as any, 'admin');
+if (result instanceof Response) return result;
+const scents = await listScents();
+const error = Astro.url.searchParams.get('error');
+---
+
+<AdminLayout title="New bundle">
+  {error && <p class="mb-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-[#C44]">{error}</p>}
+  <form action="/api/admin/bundle-create" method="post" class="max-w-lg space-y-4">
+    <div><label class="mb-1 block text-xs font-medium text-[#444]">Name</label>
+      <input name="name" required class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm" /></div>
+    <div><label class="mb-1 block text-xs font-medium text-[#444]">Slug</label>
+      <input name="slug" required pattern="[a-z0-9-]+" class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm font-mono" /></div>
+    <div><label class="mb-1 block text-xs font-medium text-[#444]">Description</label>
+      <textarea name="description" rows="3" class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm"></textarea></div>
+    <div><label class="mb-1 block text-xs font-medium text-[#444]">Price (&#8377;)</label>
+      <input name="price_rupees" type="number" required min="1" class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm font-mono" /></div>
+    <ImageUploadField mode="single" max={1} kind="bundle" />
+    <ImageUploadField mode="multi" max={5} kind="bundle" />
+    <div><label class="mb-1 block text-xs font-medium text-[#444]">Status</label>
+      <select name="status" class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm">
+        {(['draft', 'active', 'archived'] as const).map((s) => (
+          <option value={s}>{s}</option>
+        ))}
+      </select></div>
+    <fieldset class="rounded border border-[#DDDDD8] p-3">
+      <legend class="px-1 text-xs font-medium text-[#444]">Scents</legend>
+      {scents.map((s) => (
+        <label class="flex items-center gap-3 py-1 text-sm">
+          <input type="checkbox" name={`scent_${s.id}`} value="1" />
+          <span class="flex-1">{s.name}</span>
+          <input type="number" name={`qty_${s.id}`} min="1" value="1" class="w-16 rounded border border-[#DDDDD8] px-2 py-0.5 text-xs font-mono" />
+        </label>
+      ))}
+    </fieldset>
+    <button type="submit" class="rounded bg-[#1A1A1A] px-5 py-2 text-sm text-white">Create bundle</button>
+  </form>
+</AdminLayout>

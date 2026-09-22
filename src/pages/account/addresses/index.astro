@@ -1,0 +1,38 @@
+---
+import PublicLayout from '../../../layouts/PublicLayout.astro';
+import AccountNav from '../../../components/account/AccountNav.astro';
+import AddressCard from '../../../components/account/AddressCard.astro';
+import EmptyState from '../../../components/ui/EmptyState.astro';
+import { requireRole } from '../../../lib/auth/session';
+import { listAddresses } from '../../../lib/addresses';
+
+const result = await requireRole(Astro as any, 'customer');
+if (result instanceof Response) return result;
+const addresses = await listAddresses(Astro.request, Astro.cookies, result.userId);
+---
+
+<PublicLayout title="My addresses">
+  <section class="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-12 sm:px-6 md:flex-row">
+    <AccountNav />
+    <div class="flex-1">
+      <div class="mb-6 flex items-center justify-between">
+        <h1 class="font-display text-3xl font-light">My addresses</h1>
+        <a
+          href="/account/addresses/new"
+          class="bg-navy text-cream px-4 py-2 text-xs tracking-widest uppercase"
+        >+ New address</a>
+      </div>
+      {
+        addresses.length === 0 ? (
+          <EmptyState title="No saved addresses" body="Add an address to speed up checkout." cta={{ href: '/account/addresses/new', label: 'Add address' }} />
+        ) : (
+          <div class="grid gap-4 md:grid-cols-2">
+            {addresses.map((a) => (
+              <AddressCard address={a} />
+            ))}
+          </div>
+        )
+      }
+    </div>
+  </section>
+</PublicLayout>

@@ -1,0 +1,84 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import DataTable from '../../../components/admin/DataTable.astro';
+import StatusPill from '../../../components/admin/StatusPill.astro';
+import EmptyState from '../../../components/ui/EmptyState.astro';
+import { requireRole } from '../../../lib/auth/session';
+import { listOrders } from '../../../lib/admin/orders';
+import { formatINR } from '../../../lib/format';
+
+const result = await requireRole(Astro as any, 'admin');
+if (result instanceof Response) return result;
+
+const status = Astro.url.searchParams.get('status') ?? '';
+const search = Astro.url.searchParams.get('q') ?? '';
+const page = Math.max(1, parseInt(Astro.url.searchParams.get('page') ?? '1', 10));
+const pageSize = 20;
+const { orders, total } = await listOrders({
+  status: status || undefined,
+  search: search || undefined,
+  page,
+  pageSize,
+});
+const totalPages = Math.ceil(total / pageSize);
+
+const STATUSES = ['', 'pending', 'paid', 'packed', 'shipped', 'delivered', 'cancelled', 'returned'];
+---
+
+<AdminLayout title="Orders">
+  <!-- Search + filter bar -->
+  <form method="get" class="mb-4 flex gap-2">
+    <input
+      name="q"
+      value={search}
+      placeholder="Search by code…"
+      class="w-48 rounded border border-[#DDDDD8] px-3 py-1.5 text-sm"
+    />
+    <select name="status" class="rounded border border-[#DDDDD8] px-3 py-1.5 text-sm">
+      {STATUSES.map((s) => (
+        <option value={s} selected={s === status}>{s || 'All statuses'}</option>
+      ))}
+    </select>
+    <button type="submit" class="rounded bg-[#1A1A1A] px-4 py-1.5 text-xs text-white">Filter</button>
+    {(status || search) && (
+      <a href="/admin/orders" class="rounded border border-[#DDDDD8] px-4 py-1.5 text-xs">Clear</a>
+    )}
+  </form>
+
+  <div class="mb-3 text-sm text-[#666]">{total} order{total !== 1 ? 's' : ''}</div>
+
+  {orders.length === 0 ? (
+    <EmptyState title="No orders yet" body="Orders will appear here once customers start purchasing." />
+  ) : (
+    <>
+      <DataTable columns={['Code', 'Customer', 'Status', 'Payment', 'Total', 'Date', '']}>
+        {orders.map((o) => (
+          <tr class="border-t border-[#F4F4F4] hover:bg-[#FAFAF8]">
+            <td class="px-3 py-2 font-mono text-xs font-medium">{o.code}</td>
+            <td class="px-3 py-2 text-xs">{(o.profile as any)?.full_name ?? '—'}</td>
+            <td class="px-3 py-2"><StatusPill value={o.status} /></td>
+            <td class="px-3 py-2 text-xs capitalize">{o.payment_method}</td>
+            <td class="px-3 py-2 font-mono text-xs">{formatINR(o.total)}</td>
+            <td class="px-3 py-2 text-xs">{new Date(o.created_at).toLocaleDateString('en-IN')}</td>
+            <td class="px-3 py-2 text-right text-xs">
+              <a href={`/admin/orders/${o.code}`} class="text-[#0066CC]">View</a>
+            </td>
+          </tr>
+        ))}
+      </DataTable>
+      <!-- Pagination -->
+      {totalPages > 1 && (() => {
+        const base = new URLSearchParams(Astro.url.searchParams);
+        const prevParams = new URLSearchParams(base); prevParams.set('page', String(page - 1));
+        const nextParams = new URLSearchParams(base); nextParams.set('page', String(page + 1));
+        return (
+          <div class="mt-4 flex gap-2 text-xs">
+            {page > 1 && <a href={`?${prevParams}`} class="rounded border border-[#DDDDD8] px-3 py-1">&larr; Prev</a>}
+            <span class="px-3 py-1 text-[#666]">Page {page} of {totalPages}</span>
+            {page < totalPages && <a href={`?${nextParams}`} class="rounded border border-[#DDDDD8] px-3 py-1">Next &rarr;</a>}
+          </div>
+        );
+      })()}
+    </>
+  )}
+</AdminLayout>

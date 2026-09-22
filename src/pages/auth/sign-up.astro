@@ -1,0 +1,68 @@
+---
+import AuthLayout from '../../layouts/AuthLayout.astro';
+
+const error = Astro.url.searchParams.get('error');
+---
+
+<AuthLayout title="Create your account">
+  {
+    error && (
+      <p class="mb-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>
+    )
+  }
+
+  <form action="/api/auth/sign-up" method="post" class="mt-6 space-y-4">
+    <div>
+      <label class="text-navy/70 mb-1 block text-xs tracking-widest uppercase" for="full_name">
+        Name
+      </label>
+      <input
+        id="full_name"
+        name="full_name"
+        type="text"
+        required
+        autocomplete="name"
+        maxlength="80"
+        class="border-navy/20 focus:border-navy w-full rounded-sm border bg-white px-3 py-2 focus:outline-none"
+      />
+    </div>
+    <div>
+      <label class="text-navy/70 mb-1 block text-xs tracking-widest uppercase" for="email">
+        Email
+      </label>
+      <input
+        id="email"
+        name="email"
+        type="email"
+        required
+        autocomplete="email"
+        class="border-navy/20 focus:border-navy w-full rounded-sm border bg-white px-3 py-2 focus:outline-none"
+      />
+    </div>
+    <div>
+      <label class="text-navy/70 mb-1 block text-xs tracking-widest uppercase" for="password">
+        Password
+      </label>
+      <input
+        id="password"
+        name="password"
+        type="password"
+        required
+        autocomplete="new-password"
+        minlength="8"
+        class="border-navy/20 focus:border-navy w-full rounded-sm border bg-white px-3 py-2 focus:outline-none"
+      />
+      <p class="text-navy/50 mt-1 text-xs">At least 8 characters.</p>
+    </div>
+    <button
+      type="submit"
+      class="bg-navy text-cream hover:bg-near-black w-full py-3 text-xs tracking-widest uppercase transition-colors duration-200"
+    >
+      Create account
+    </button>
+  </form>
+
+  <p class="text-navy/70 mt-8 text-center text-sm">
+    Already have one? <a href="/auth/sign-in" class="text-navy underline">Sign in</a>
+  </p>
+</AuthLayout>

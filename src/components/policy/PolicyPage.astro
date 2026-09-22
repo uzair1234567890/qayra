@@ -1,0 +1,14 @@
+---
+interface Props {
+  title: string;
+  updated?: string;
+}
+const { title, updated } = Astro.props;
+---
+
+<article class="mx-auto max-w-2xl px-4 py-12 sm:px-6 md:py-20">
+  <p class="text-aubergine mb-3 text-xs tracking-[0.3em] uppercase">Policy</p>
+  <h1 class="font-display mb-2 text-4xl font-light md:text-5xl">{title}</h1>
+  {updated && <p class="text-navy/50 mb-8 text-xs">Last updated: {updated}</p>}
+  <div class="prose prose-navy text-navy/80 max-w-none space-y-4 leading-relaxed"><slot /></div>
+</article>

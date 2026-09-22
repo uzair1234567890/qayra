@@ -1,0 +1,45 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import DataTable from '../../../components/admin/DataTable.astro';
+import EmptyState from '../../../components/admin/EmptyState.astro';
+import { requireRole } from '../../../lib/auth/session';
+import { listDiscounts } from '../../../lib/admin/discounts';
+import { formatINR } from '../../../lib/format';
+
+const result = await requireRole(Astro as any, 'admin');
+if (result instanceof Response) return result;
+const discounts = await listDiscounts();
+const error = Astro.url.searchParams.get('error');
+
+function displayValue(type: string, value: number) {
+  return type === 'percent' ? `${value}%` : formatINR(value);
+}
+---
+
+<AdminLayout title="Discounts">
+  {error && <p class="mb-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-[#C44]">{error}</p>}
+  <div class="mb-4 flex items-center justify-between">
+    <h2 class="text-sm text-[#666]">{discounts.length} discount code{discounts.length !== 1 ? 's' : ''}</h2>
+    <a href="/admin/discounts/new" class="rounded bg-[#1A1A1A] px-4 py-2 text-xs text-white">+ New discount</a>
+  </div>
+  {discounts.length === 0 ? (
+    <EmptyState message="No discount codes yet." />
+  ) : (
+    <DataTable columns={['Code', 'Type', 'Value', 'Min order', 'Uses', 'Active from', 'Active until', '']}>
+      {discounts.map((d) => (
+        <tr class="border-t border-[#F4F4F4] hover:bg-[#FAFAF8]">
+          <td class="px-3 py-2 font-mono text-xs font-medium">{d.code}</td>
+          <td class="px-3 py-2 text-xs">{d.type}</td>
+          <td class="px-3 py-2 font-mono text-xs">{displayValue(d.type, d.value)}</td>
+          <td class="px-3 py-2 font-mono text-xs">{d.min_subtotal > 0 ? formatINR(d.min_subtotal) : '—'}</td>
+          <td class="px-3 py-2 text-xs">{d.used_count}/{d.max_uses ?? '∞'}</td>
+          <td class="px-3 py-2 text-xs">{d.active_from ? new Date(d.active_from).toLocaleDateString('en-IN') : '—'}</td>
+          <td class="px-3 py-2 text-xs">{d.active_until ? new Date(d.active_until).toLocaleDateString('en-IN') : '—'}</td>
+          <td class="px-3 py-2 text-right text-xs space-x-2">
+            <a href={`/admin/discounts/${d.code}`} class="text-[#0066CC]">Edit</a>
+          </td>
+        </tr>
+      ))}
+    </DataTable>
+  )}
+</AdminLayout>

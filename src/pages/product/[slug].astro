@@ -1,0 +1,80 @@
+---
+import PublicLayout from '../../layouts/PublicLayout.astro';
+import ProductJsonLd from '../../components/seo/ProductJsonLd.astro';
+import BreadcrumbJsonLd from '../../components/seo/BreadcrumbJsonLd.astro';
+import HeroStagger from '../../components/motion/HeroStagger.astro';
+import ProductSwitcher from '../../components/product/ProductSwitcher.astro';
+import ProductNotes from '../../components/product/ProductNotes.astro';
+import ImageSlideshow from '../../components/product/ImageSlideshow.astro';
+import StickyBuyBar from '../../components/product/StickyBuyBar.astro';
+import StarRating from '../../components/ui/StarRating.astro';
+import ReviewList from '../../components/product/ReviewList.astro';
+import ReviewForm from '../../components/product/ReviewForm.astro';
+import CrossSellRow from '../../components/product/CrossSellRow.astro';
+import LowStockBadge from '../../components/product/LowStockBadge.astro';
+import { getActiveScents } from '../../lib/catalog';
+import { listForScent, aggregateForScent } from '../../lib/reviews';
+
+const { slug } = Astro.params;
+
+// Validate slug format before hitting the DB (I5)
+if (!slug || slug.length > 80 || !/^[a-z0-9-]+$/.test(slug)) {
+  return Astro.rewrite('/404');
+}
+
+// One query instead of two — derive the current scent from the full list (C4)
+const all = await getActiveScents(Astro.request, Astro.cookies);
+const scent = all.find((s) => s.slug === slug) ?? null;
+
+// Return proper HTTP 404 via rewrite (C5)
+if (!scent) return Astro.rewrite('/404');
+
+const sortIndex = all.findIndex((s) => s.id === scent.id) + 1;
+const padded = String(sortIndex).padStart(2, '0');
+
+const [reviews, aggregate] = await Promise.all([
+  listForScent(Astro.request, Astro.cookies, scent.id),
+  aggregateForScent(Astro.request, Astro.cookies, scent.id),
+]);
+---
+
+<PublicLayout title={scent.name} description={scent.description ?? undefined}>
+  <ProductJsonLd scent={scent} />
+  <BreadcrumbJsonLd
+    crumbs={[
+      { name: 'Home', url: `${Astro.site}` },
+      { name: 'Products', url: `${Astro.site}products` },
+      { name: scent.name, url: `${Astro.site}product/${scent.slug}` },
+    ]}
+  />
+  <article class="pb-32">
+    <nav class="text-navy/60 mx-auto max-w-3xl px-4 py-3 text-xs tracking-widest uppercase sm:px-6">
+      <a href="/products" class="hover:text-navy">Products</a> · {scent.name}
+    </nav>
+
+    <div class="mx-auto max-w-3xl">
+      <ImageSlideshow images={scent.image_urls ?? []} name={scent.name} />
+    </div>
+
+    <div class="mx-auto max-w-2xl px-4 py-8 sm:px-6">
+      <HeroStagger>
+        <p class="text-aubergine mb-2 text-xs tracking-[0.3em] uppercase">No. {padded}</p>
+        <h1 class="font-display mb-2 text-4xl leading-tight font-light md:text-5xl">{scent.name}</h1>
+        <div>
+          {scent.tagline && <p class="text-navy/70 mb-3 italic">{scent.tagline}</p>}
+          <StarRating value={aggregate.average} count={aggregate.count} class="mb-6" />
+        </div>
+      </HeroStagger>
+      <div class="mb-2"><LowStockBadge stockQty={scent.stock_qty ?? null} /></div>
+      <div class="mb-6"><ProductSwitcher scents={all} activeSlug={scent.slug} /></div>
+      {scent.description && <p class="text-navy/80 mb-6 leading-relaxed">{scent.description}</p>}
+      <ProductNotes scent={scent} />
+    </div>
+    <CrossSellRow excludeId={scent.id} />
+  </article>
+  <StickyBuyBar scent={scent} />
+  <div class="mx-auto max-w-2xl px-4 pb-16 sm:px-6">
+    <ReviewList reviews={reviews} aggregate={aggregate} />
+    <ReviewForm scentId={scent.id} />
+  </div>
+</PublicLayout>

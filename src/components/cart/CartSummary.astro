@@ -1,0 +1,31 @@
+---
+import { formatINR } from '../../lib/format';
+import { FREE_SHIPPING_THRESHOLD } from '../../lib/pricing';
+import type { PricingResult } from '../../lib/pricing';
+interface Props { totals: PricingResult; cta: string; href: string; }
+const { totals, cta, href } = Astro.props;
+const remaining = Math.max(0, FREE_SHIPPING_THRESHOLD - (totals.subtotal - totals.discount));
+---
+<div class="space-y-2 text-sm">
+  <div class="flex justify-between"><span>Subtotal</span><span>{formatINR(totals.subtotal)}</span></div>
+  {totals.discount > 0 && (
+    <div class="text-aubergine flex justify-between">
+      <span>Discount</span><span>−{formatINR(totals.discount)}</span>
+    </div>
+  )}
+  <div class="flex justify-between">
+    <span>Shipping</span><span>{totals.shipping === 0 ? 'Free' : formatINR(totals.shipping)}</span>
+  </div>
+  {totals.codSurcharge > 0 && (
+    <div class="flex justify-between">
+      <span>COD surcharge</span><span>{formatINR(totals.codSurcharge)}</span>
+    </div>
+  )}
+  <div class="border-navy/20 mt-2 flex justify-between border-t pt-2 text-base font-medium">
+    <span>Total</span><span>{formatINR(totals.total)}</span>
+  </div>
+  {remaining > 0 && (
+    <p class="text-aubergine text-xs">Add {formatINR(remaining)} more for free shipping</p>
+  )}
+  <a href={href} class="bg-navy text-cream mt-4 block py-3 text-center text-xs tracking-widest uppercase">{cta}</a>
+</div>

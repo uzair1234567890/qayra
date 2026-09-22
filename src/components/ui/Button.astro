@@ -1,0 +1,106 @@
+---
+interface Props {
+  variant?: 'primary' | 'secondary' | 'ghost';
+  href?: string;
+  type?: 'button' | 'submit';
+  class?: string;
+  disabled?: boolean;
+  ariaBusy?: boolean;
+  excludeLoading?: boolean;
+  successLabel?: string;
+  errorLabel?: string;
+}
+
+const {
+  variant = 'primary',
+  href,
+  type = 'button',
+  class: className = '',
+  disabled,
+  ariaBusy,
+  excludeLoading = false,
+  successLabel,
+  errorLabel,
+} = Astro.props;
+
+const base =
+  'inline-flex items-center justify-center px-6 py-3 text-xs uppercase tracking-widest font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-champagne focus-visible:outline-offset-2';
+
+const styles = {
+  primary: 'btn-primary bg-navy text-cream hover:bg-near-black',
+  secondary: 'bg-champagne text-near-black hover:bg-champagne/85',
+  ghost: 'border border-navy/30 text-navy hover:bg-navy/5',
+};
+
+const cls = `${base} ${styles[variant]} ${className}`;
+---
+
+{
+  href ? (
+    <a
+      href={href}
+      class={cls}
+      aria-busy={ariaBusy ? 'true' : undefined}
+      data-loading={excludeLoading ? undefined : ''}
+      data-no-loading={excludeLoading ? '' : undefined}
+      data-success-label={successLabel}
+      data-error-label={errorLabel}
+    >
+      <span style="position: relative; z-index: 1;"><slot /></span>
+    </a>
+  ) : (
+    <button
+      type={type}
+      class={cls}
+      disabled={disabled}
+      aria-busy={ariaBusy ? 'true' : undefined}
+      data-loading={excludeLoading ? undefined : ''}
+      data-no-loading={excludeLoading ? '' : undefined}
+      data-success-label={successLabel}
+      data-error-label={errorLabel}
+    >
+      <span style="position: relative; z-index: 1;"><slot /></span>
+    </button>
+  )
+}
+
+<style>
+  .btn-primary {
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-primary::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--color-champagne);
+    transform: scaleX(0);
+    transform-origin: left;
+    z-index: 0;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .btn-primary::before {
+      transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+  }
+  .btn-primary[data-clicked]::before {
+    transform: scaleX(1);
+  }
+</style>
+<script>
+  function arm(): void {
+    document.querySelectorAll<HTMLElement>('.btn-primary:not([data-armed])').forEach((btn) => {
+      btn.dataset.armed = '';
+      btn.addEventListener('click', () => {
+        btn.setAttribute('data-clicked', '');
+        window.setTimeout(() => btn.removeAttribute('data-clicked'), 1200);
+      });
+    });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', arm);
+  } else {
+    arm();
+  }
+  document.addEventListener('astro:page-load', arm);
+</script>

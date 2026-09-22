@@ -1,0 +1,11 @@
+---
+import { buildBreadcrumbLd } from '../../lib/seo/jsonld';
+
+interface Props {
+  crumbs: { name: string; url: string }[];
+}
+const { crumbs } = Astro.props;
+const ld = buildBreadcrumbLd(crumbs);
+---
+
+<script type="application/ld+json" set:html={JSON.stringify(ld)} is:inline />

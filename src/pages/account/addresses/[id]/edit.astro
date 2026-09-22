@@ -1,0 +1,22 @@
+---
+import PublicLayout from '../../../../layouts/PublicLayout.astro';
+import AccountNav from '../../../../components/account/AccountNav.astro';
+import AddressForm from '../../../../components/account/AddressForm.astro';
+import { requireRole } from '../../../../lib/auth/session';
+import { getAddress } from '../../../../lib/addresses';
+
+const result = await requireRole(Astro as any, 'customer');
+if (result instanceof Response) return result;
+const a = await getAddress(Astro.request, Astro.cookies, result.userId, Astro.params.id!);
+if (!a) return Astro.redirect('/account/addresses', 302);
+---
+
+<PublicLayout title="Edit address">
+  <section class="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-12 sm:px-6 md:flex-row">
+    <AccountNav />
+    <div class="flex-1">
+      <h1 class="font-display mb-6 text-3xl font-light">Edit address</h1>
+      <AddressForm address={a} action="/api/account/address-update" />
+    </div>
+  </section>
+</PublicLayout>

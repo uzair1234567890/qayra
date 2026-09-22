@@ -1,0 +1,50 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import DataTable from '../../../components/admin/DataTable.astro';
+import StatusPill from '../../../components/admin/StatusPill.astro';
+import EmptyState from '../../../components/admin/EmptyState.astro';
+import { requireRole } from '../../../lib/auth/session';
+import { supabaseAdmin } from '../../../lib/supabase/admin';
+import { formatINR } from '../../../lib/format';
+
+const result = await requireRole(Astro as any, 'admin');
+if (result instanceof Response) return result;
+
+const { data: items } = await supabaseAdmin
+  .from('scents')
+  .select('id, name, slug, active, stock_qty, sort_order, product:products(base_price)')
+  .order('sort_order')
+  .order('name');
+const products = (items ?? []).map((s) => ({
+  id: s.id,
+  name: s.name,
+  slug: s.slug,
+  active: s.active,
+  stock_qty: s.stock_qty,
+  price: (s.product as { base_price: number } | null)?.base_price ?? 0,
+}));
+---
+
+<AdminLayout title="Products">
+  <div class="mb-4 flex items-center justify-between">
+    <h2 class="text-sm text-[#666]">{products.length} product{products.length !== 1 ? 's' : ''}</h2>
+    <a href="/admin/products/new" class="rounded bg-[#1A1A1A] px-3 py-1.5 text-xs text-white">New product</a>
+  </div>
+  {products.length === 0 ? (
+    <EmptyState message="No products yet." />
+  ) : (
+    <DataTable columns={['Name', 'Status', 'Price', 'Stock', '']}>
+      {products.map((p) => (
+        <tr class="border-t border-[#F4F4F4] hover:bg-[#FAFAF8]">
+          <td class="px-3 py-2">{p.name}</td>
+          <td class="px-3 py-2"><StatusPill value={p.active ? 'active' : 'inactive'} /></td>
+          <td class="px-3 py-2 font-mono text-xs">{formatINR(p.price)}</td>
+          <td class="px-3 py-2 font-mono text-xs">{p.stock_qty}</td>
+          <td class="px-3 py-2 text-right">
+            <a href={`/admin/products/${p.id}`} class="text-xs text-[#0066CC]">Edit</a>
+          </td>
+        </tr>
+      ))}
+    </DataTable>
+  )}
+</AdminLayout>

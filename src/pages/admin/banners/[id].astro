@@ -1,0 +1,117 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import DangerZone from '../../../components/admin/DangerZone.astro';
+import { requireRole } from '../../../lib/auth/session';
+import { getBanner } from '../../../lib/admin/banners';
+
+const result = await requireRole(Astro as any, 'admin');
+if (result instanceof Response) return result;
+
+const banner = await getBanner(Astro.params.id!);
+if (!banner) return Astro.redirect('/admin/banners', 302);
+
+const info = Astro.url.searchParams.get('info');
+const error = Astro.url.searchParams.get('error');
+
+// Convert UTC ISO datetime strings to datetime-local format in IST (Asia/Kolkata, UTC+5:30).
+// 'sv-SE' locale outputs ISO-style "YYYY-MM-DD HH:MM:SS"; slicing + replacing space gives datetime-local value.
+function toDatetimeLocal(iso: string | null): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
+  return d.toLocaleString('sv-SE', { timeZone: 'Asia/Kolkata' }).slice(0, 16).replace(' ', 'T');
+}
+---
+
+<AdminLayout title={`Edit banner`}>
+  {info && <p class="mb-4 rounded border border-green-200 bg-green-50 p-3 text-sm text-[#0A8A00]">{info}</p>}
+  {error && <p class="mb-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-[#C44]">{error}</p>}
+
+  <form action="/api/admin/banner-update" method="post" class="max-w-md space-y-4">
+    <input type="hidden" name="id" value={banner.id} />
+    <div>
+      <label class="mb-1 block text-xs font-medium text-[#444]">Position</label>
+      <select name="position" class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm">
+        <option value="announcement" selected={banner.position === 'announcement'}>Announcement</option>
+        <option value="hero" selected={banner.position === 'hero'}>Hero</option>
+      </select>
+    </div>
+    <div>
+      <label class="mb-1 block text-xs font-medium text-[#444]">Image URL (optional)</label>
+      <input
+        name="image_url"
+        type="url"
+        value={banner.image_url ?? ''}
+        class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm"
+        placeholder="https://..."
+      />
+    </div>
+    <div>
+      <label class="mb-1 block text-xs font-medium text-[#444]">Headline (optional)</label>
+      <input
+        name="headline"
+        type="text"
+        maxlength="200"
+        value={banner.headline ?? ''}
+        class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm"
+      />
+    </div>
+    <div>
+      <label class="mb-1 block text-xs font-medium text-[#444]">CTA text (optional)</label>
+      <input
+        name="cta_text"
+        type="text"
+        maxlength="80"
+        value={banner.cta_text ?? ''}
+        class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm"
+      />
+    </div>
+    <div>
+      <label class="mb-1 block text-xs font-medium text-[#444]">CTA URL (optional)</label>
+      <input
+        name="cta_url"
+        type="url"
+        value={banner.cta_url ?? ''}
+        class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm"
+        placeholder="https://..."
+      />
+    </div>
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="mb-1 block text-xs font-medium text-[#444]">Active from</label>
+        <input
+          name="active_from"
+          type="datetime-local"
+          value={toDatetimeLocal(banner.active_from)}
+          class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm"
+        />
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-[#444]">Active until</label>
+        <input
+          name="active_until"
+          type="datetime-local"
+          value={toDatetimeLocal(banner.active_until)}
+          class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm"
+        />
+      </div>
+    </div>
+    <button type="submit" class="rounded bg-[#1A1A1A] px-5 py-2 text-sm text-white">Save changes</button>
+  </form>
+
+  <div class="mt-8">
+    <DangerZone>
+      <p class="mb-3 text-sm text-[#444]">Permanently delete this banner. This cannot be undone.</p>
+      <form action="/api/admin/banner-delete" method="post">
+        <input type="hidden" name="id" value={banner.id} />
+        <button
+          type="submit"
+          class="rounded border border-[#C44] px-4 py-1.5 text-xs text-[#C44] hover:bg-[#C44] hover:text-white"
+          onclick="return confirm('Delete this banner? This cannot be undone.')"
+        >
+          Delete banner
+        </button>
+      </form>
+    </DangerZone>
+  </div>
+</AdminLayout>

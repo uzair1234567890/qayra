@@ -1,0 +1,148 @@
+---
+import OpsLayout from '../../layouts/OpsLayout.astro';
+import { requireRole } from '../../lib/auth/session';
+import { listReturns } from '../../lib/ops/returns';
+import { formatINR } from '../../lib/format';
+
+const result = await requireRole(Astro as any, 'operations');
+if (result instanceof Response) return result;
+
+const VALID_TABS = ['requested', 'approved', 'refunded'] as const;
+type Tab = (typeof VALID_TABS)[number];
+
+const rawTab = Astro.url.searchParams.get('tab') ?? 'requested';
+const tab: Tab = (VALID_TABS as readonly string[]).includes(rawTab) ? (rawTab as Tab) : 'requested';
+
+const returns = await listReturns(tab);
+
+const info = Astro.url.searchParams.get('info');
+const error = Astro.url.searchParams.get('error');
+---
+
+<OpsLayout title="Returns">
+  {info && (
+    <div class="mb-4 rounded border border-green-700 bg-green-900/30 px-4 py-3 text-sm text-green-300">
+      {info}
+    </div>
+  )}
+  {error && (
+    <div class="mb-4 rounded border border-red-700 bg-red-900/30 px-4 py-3 text-sm text-red-300">
+      {error}
+    </div>
+  )}
+
+  <div class="mb-5 flex gap-2 border-b border-[#2A3340]">
+    {VALID_TABS.map((t) => (
+      <a
+        href={`/ops/returns?tab=${t}`}
+        class={`px-4 py-2 text-sm font-medium capitalize transition-colors ${
+          tab === t
+            ? 'border-b-2 border-[#E8ECF0] text-[#E8ECF0]'
+            : 'text-[#8899AA] hover:text-[#E8ECF0]'
+        }`}
+      >
+        {t}
+      </a>
+    ))}
+  </div>
+
+  {returns.length === 0 ? (
+    <div class="rounded border border-[#2A3340] bg-[#1A2330] px-6 py-12 text-center text-sm text-[#8899AA]">
+      No returns in this queue.
+    </div>
+  ) : (
+    <div class="flex flex-col gap-3">
+      {returns.map((ret: any) => (
+        <div class="rounded border border-[#2A3340] bg-[#1A2330] px-5 py-4">
+          <div class="mb-3 flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <span class="font-mono text-sm font-semibold text-[#E8ECF0]">
+                {ret.order?.code ?? '—'}
+              </span>
+              <span class="ml-3 text-sm text-[#8899AA]">
+                {ret.order?.profile?.full_name ?? 'Unknown customer'}
+              </span>
+            </div>
+            <span class="text-sm font-medium text-[#E8ECF0]">
+              {formatINR(ret.order?.total ?? 0)}
+            </span>
+          </div>
+
+          <p class="mb-4 text-sm text-[#B0BCC8]">
+            <span class="font-medium text-[#8899AA]">Reason:</span> {ret.reason}
+          </p>
+
+          {tab === 'requested' && (
+            <div class="flex flex-wrap items-start gap-3">
+              <form method="POST" action="/api/ops/return-approve" data-astro-reload>
+                <input type="hidden" name="return_id" value={ret.id} />
+                <button
+                  type="submit"
+                  class="rounded bg-green-700 px-4 py-1.5 text-sm font-medium text-white hover:bg-green-600 active:bg-green-800"
+                >
+                  Approve
+                </button>
+              </form>
+
+              <details class="flex-1">
+                <summary class="cursor-pointer rounded border border-red-800 px-4 py-1.5 text-sm font-medium text-red-400 hover:bg-red-900/20 list-none">
+                  Reject
+                </summary>
+                <form method="POST" action="/api/ops/return-reject" class="mt-2 flex flex-col gap-2" data-astro-reload>
+                  <input type="hidden" name="return_id" value={ret.id} />
+                  <textarea
+                    name="reason"
+                    required
+                    maxlength="500"
+                    rows="3"
+                    placeholder="Reason for rejection…"
+                    class="w-full rounded border border-[#2A3340] bg-[#0F1620] px-3 py-2 text-sm text-[#E8ECF0] placeholder-[#4A5568] focus:border-[#4A5568] focus:outline-none"
+                  />
+                  <button
+                    type="submit"
+                    class="self-start rounded bg-red-700 px-4 py-1.5 text-sm font-medium text-white hover:bg-red-600 active:bg-red-800"
+                  >
+                    Confirm reject
+                  </button>
+                </form>
+              </details>
+            </div>
+          )}
+
+          {tab === 'approved' && (
+            <form method="POST" action="/api/ops/return-refunded" class="flex flex-wrap items-center gap-3" data-astro-reload>
+              <input type="hidden" name="return_id" value={ret.id} />
+              <div class="flex items-center gap-2">
+                <span class="text-sm text-[#8899AA]">Refund (paise):</span>
+                <input
+                  type="number"
+                  name="refund_amount"
+                  min="0"
+                  step="1"
+                  required
+                  placeholder={String(ret.order?.total ?? 0)}
+                  class="w-32 rounded border border-[#2A3340] bg-[#0F1620] px-3 py-1.5 text-sm text-[#E8ECF0] focus:border-[#4A5568] focus:outline-none"
+                />
+              </div>
+              <button
+                type="submit"
+                class="rounded bg-blue-700 px-4 py-1.5 text-sm font-medium text-white hover:bg-blue-600 active:bg-blue-800"
+              >
+                Mark refunded
+              </button>
+            </form>
+          )}
+
+          {tab === 'refunded' && (
+            <div class="text-sm text-[#8899AA]">
+              Refund amount:{' '}
+              <span class="font-medium text-[#E8ECF0]">
+                {ret.refund_amount != null ? formatINR(ret.refund_amount) : '—'}
+              </span>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  )}
+</OpsLayout>

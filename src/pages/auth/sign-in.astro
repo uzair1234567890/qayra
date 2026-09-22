@@ -1,0 +1,78 @@
+---
+import AuthLayout from '../../layouts/AuthLayout.astro';
+
+const error = Astro.url.searchParams.get('error');
+const info = Astro.url.searchParams.get('info');
+const next = Astro.url.searchParams.get('next') || '';
+---
+
+<AuthLayout title="Sign in">
+  {
+    error && (
+      <p class="mb-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>
+    )
+  }
+  {
+    info && (
+      <p class="text-navy bg-champagne/20 border-champagne/40 mb-4 rounded border p-3 text-sm">
+        {info}
+      </p>
+    )
+  }
+
+  <form action="/api/auth/sign-in" method="post" class="mt-6 space-y-4">
+    <input type="hidden" name="next" value={next} />
+    <div>
+      <label class="text-navy/70 mb-1 block text-xs tracking-widest uppercase" for="email">
+        Email
+      </label>
+      <input
+        id="email"
+        name="email"
+        type="email"
+        required
+        autocomplete="email"
+        class="border-navy/20 focus:border-navy w-full rounded-sm border bg-white px-3 py-2 focus:outline-none"
+      />
+    </div>
+    <div>
+      <label class="text-navy/70 mb-1 block text-xs tracking-widest uppercase" for="password">
+        Password
+      </label>
+      <input
+        id="password"
+        name="password"
+        type="password"
+        required
+        autocomplete="current-password"
+        minlength="1"
+        class="border-navy/20 focus:border-navy w-full rounded-sm border bg-white px-3 py-2 focus:outline-none"
+      />
+    </div>
+    <button
+      type="submit"
+      class="bg-navy text-cream hover:bg-near-black w-full py-3 text-xs tracking-widest uppercase transition-colors duration-200"
+    >
+      Sign in
+    </button>
+  </form>
+
+  <div class="text-navy/40 my-6 text-center text-xs tracking-widest uppercase">or</div>
+
+  <form action="/api/auth/oauth-google" method="post">
+    <input type="hidden" name="next" value={next} />
+    <button
+      type="submit"
+      class="border-navy/30 hover:bg-navy/5 w-full border py-3 text-xs tracking-widest uppercase transition-colors duration-200"
+    >
+      Continue with Google
+    </button>
+  </form>
+
+  <p class="text-navy/70 mt-8 text-center text-sm">
+    New here? <a href="/auth/sign-up" class="text-navy underline">Create an account</a>
+  </p>
+  <p class="text-navy/70 mt-2 text-center text-sm">
+    <a href="/auth/forgot-password" class="underline">Forgot password?</a>
+  </p>
+</AuthLayout>

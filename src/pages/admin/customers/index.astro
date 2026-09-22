@@ -1,0 +1,61 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import DataTable from '../../../components/admin/DataTable.astro';
+import EmptyState from '../../../components/ui/EmptyState.astro';
+import { requireRole } from '../../../lib/auth/session';
+import { listCustomers } from '../../../lib/admin/customers';
+import { formatINR } from '../../../lib/format';
+
+const result = await requireRole(Astro as any, 'admin');
+if (result instanceof Response) return result;
+
+const search = Astro.url.searchParams.get('q') ?? '';
+const page = Math.max(1, parseInt(Astro.url.searchParams.get('page') ?? '1', 10));
+const pageSize = 20;
+const { customers, total } = await listCustomers({ search: search || undefined, page, pageSize });
+const totalPages = Math.ceil(total / pageSize);
+---
+
+<AdminLayout title="Customers">
+  <form method="get" class="mb-4 flex gap-2">
+    <input name="q" value={search} placeholder="Search by email…"
+      class="w-64 rounded border border-[#DDDDD8] px-3 py-1.5 text-sm" />
+    <button type="submit" class="rounded bg-[#1A1A1A] px-4 py-1.5 text-xs text-white">Search</button>
+    {search && <a href="/admin/customers" class="rounded border border-[#DDDDD8] px-4 py-1.5 text-xs">Clear</a>}
+  </form>
+
+  <div class="mb-3 text-sm text-[#666]">{total} customer{total !== 1 ? 's' : ''}</div>
+
+  {customers.length === 0 ? (
+    <EmptyState title="No customers yet" body="Customers will appear here after their first purchase." />
+  ) : (
+    <>
+      <DataTable columns={['Name', 'Email', 'Orders', 'Lifetime spend', 'Joined', '']}>
+        {customers.map((c) => (
+          <tr class="border-t border-[#F4F4F4] hover:bg-[#FAFAF8]">
+            <td class="px-3 py-2 text-sm">{c.full_name ?? '—'}</td>
+            <td class="px-3 py-2 text-xs">{c.email}</td>
+            <td class="px-3 py-2 text-xs">{c.orders}</td>
+            <td class="px-3 py-2 font-mono text-xs">{formatINR(c.spend)}</td>
+            <td class="px-3 py-2 text-xs">{new Date(c.joined).toLocaleDateString('en-IN')}</td>
+            <td class="px-3 py-2 text-right text-xs">
+              <a href={`/admin/customers/${c.id}`} class="text-[#0066CC]">View</a>
+            </td>
+          </tr>
+        ))}
+      </DataTable>
+      {totalPages > 1 && (() => {
+        const base = new URLSearchParams(Astro.url.searchParams);
+        const prevP = new URLSearchParams(base); prevP.set('page', String(page - 1));
+        const nextP = new URLSearchParams(base); nextP.set('page', String(page + 1));
+        return (
+          <div class="mt-4 flex gap-2 text-xs">
+            {page > 1 && <a href={`?${prevP}`} class="rounded border border-[#DDDDD8] px-3 py-1">&larr; Prev</a>}
+            <span class="px-3 py-1 text-[#666]">Page {page} of {totalPages}</span>
+            {page < totalPages && <a href={`?${nextP}`} class="rounded border border-[#DDDDD8] px-3 py-1">Next &rarr;</a>}
+          </div>
+        );
+      })()}
+    </>
+  )}
+</AdminLayout>

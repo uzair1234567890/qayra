@@ -1,0 +1,51 @@
+---
+import { getSession } from '../../lib/auth/session';
+
+const path = Astro.url.pathname;
+const session = await getSession(Astro.request, Astro.cookies);
+
+interface Item {
+  href: string;
+  label: string;
+  match: string;
+}
+
+const roleItems: Item[] =
+  session?.role === 'admin'
+    ? [{ href: '/admin', label: 'Admin panel', match: '/admin' }]
+    : session?.role === 'operations'
+      ? [{ href: '/ops', label: 'Operations dashboard', match: '/ops' }]
+      : [];
+
+const items: Item[] = [
+  ...roleItems,
+  { href: '/account', label: 'Overview', match: '/account' },
+  { href: '/account/orders', label: 'Orders', match: '/account/orders' },
+  { href: '/account/addresses', label: 'Addresses', match: '/account/addresses' },
+  { href: '/account/reviews', label: 'Reviews', match: '/account/reviews' },
+  { href: '/account/profile', label: 'Profile', match: '/account/profile' },
+];
+---
+
+<aside class="flex-shrink-0 md:w-48">
+  <nav class="flex gap-1 text-sm md:flex-col">
+    {
+      items.map((it) => {
+        const active =
+          path === it.match || (it.match !== '/account' && path.startsWith(it.match));
+        return (
+          <a
+            href={it.href}
+            aria-current={active ? 'page' : undefined}
+            class:list={['hover:bg-navy/5 px-3 py-2', active && 'bg-navy text-cream hover:bg-navy']}
+          >
+            {it.label}
+          </a>
+        );
+      })
+    }
+    <form action="/api/auth/sign-out" method="post" class="mt-2">
+      <button class="text-navy/70 hover:text-navy w-full px-3 py-2 text-left">Sign out</button>
+    </form>
+  </nav>
+</aside>

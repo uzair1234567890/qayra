@@ -1,0 +1,27 @@
+.qa-spinner {
+  width: 1em;
+  height: 1em;
+  display: inline-block;
+  transform-origin: center;
+  animation: qa-spin 800ms linear infinite;
+}
+
+@keyframes qa-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes qa-dots {
+  0%, 100% { opacity: 0.25; }
+  50%      { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qa-spinner {
+    animation: qa-dots 1500ms steps(3, end) infinite;
+    transform: none;
+  }
+}
+
+/* Loading-state alignment guard (scoped to buttons/anchors only). */
+a[data-state='loading'] > *,
+button[data-state='loading'] > * { vertical-align: middle; }

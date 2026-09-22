@@ -1,0 +1,54 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { requireRole } from '../../lib/auth/session';
+import { listInventory } from '../../lib/admin/inventory';
+
+const result = await requireRole(Astro as any, 'admin');
+if (result instanceof Response) return result;
+const items = await listInventory();
+const info = Astro.url.searchParams.get('info');
+const error = Astro.url.searchParams.get('error');
+---
+
+<AdminLayout title="Inventory">
+  {info && <p class="mb-4 rounded border border-green-200 bg-green-50 p-3 text-sm text-[#0A8A00]">{info}</p>}
+  {error && <p class="mb-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-[#C44]">{error}</p>}
+  <div class="rounded border border-[#EAEAEA] bg-white">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-[#EAEAEA] text-left text-[10px] tracking-widest text-[#888] uppercase">
+          <th class="px-3 py-2">Name</th>
+          <th class="px-3 py-2">Active</th>
+          <th class="px-3 py-2">Stock qty</th>
+          <th class="px-3 py-2"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {items.map((s) => (
+          <tr class="border-t border-[#F4F4F4]">
+            <td class="px-3 py-2">{s.name}</td>
+            <td class="px-3 py-2">
+              <span class:list={['text-xs font-medium', s.active ? 'text-[#0A8A00]' : 'text-[#888]']}>
+                {s.active ? 'Yes' : 'No'}
+              </span>
+            </td>
+            <td class="px-3 py-2">
+              <form action="/api/admin/inventory-set" method="post" class="flex items-center gap-2">
+                <input type="hidden" name="id" value={s.id} />
+                <input
+                  type="number"
+                  name="stock_qty"
+                  min="0"
+                  value={s.stock_qty}
+                  class="w-20 rounded border border-[#DDDDD8] px-2 py-1 text-sm font-mono"
+                />
+                <button type="submit" class="rounded bg-[#1A1A1A] px-3 py-1 text-xs text-white">Save</button>
+              </form>
+            </td>
+            <td></td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</AdminLayout>

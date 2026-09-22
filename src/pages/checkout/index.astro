@@ -1,0 +1,259 @@
+---
+import PublicLayout from '../../layouts/PublicLayout.astro';
+import { getOrCreateCart, getCartLines } from '../../lib/cart';
+import { computeTotals } from '../../lib/pricing';
+import { getSession } from '../../lib/auth/session';
+import { formatINR } from '../../lib/format';
+import { readSetting } from '../../lib/settings';
+import { evaluateOffers } from '../../lib/offers';
+
+const session = await getSession(Astro.request, Astro.cookies);
+const cartId = await getOrCreateCart(Astro.request, Astro.cookies, Astro.locals.cartToken);
+const lines = await getCartLines(Astro.request, Astro.cookies, cartId);
+if (lines.length === 0) return Astro.redirect('/cart', 302);
+
+const [freeShippingPaise, flatShippingPaise] = await Promise.all([
+  readSetting('free_shipping_threshold', 49900),
+  readSetting('flat_shipping', 5000),
+]);
+
+const subtotalForOffers = lines.reduce((s, l) => s + l.price * l.quantity, 0);
+const offerResult = await evaluateOffers({
+  lines: lines.map((l) => ({ scent_id: l.scent_id, bundle_id: l.bundle_id, price: l.price, quantity: l.quantity })),
+  subtotalAfterDiscount: subtotalForOffers,
+});
+
+const totalsPrepaid = computeTotals({
+  lines: lines.map((l) => ({ price: l.price, quantity: l.quantity })),
+  paymentMethod: 'prepaid',
+  discountPaise: offerResult.extraDiscount,
+  freeShippingPaise: offerResult.freeShipping ? subtotalForOffers + 1 : freeShippingPaise,
+  flatShippingPaise,
+});
+
+const rzpKey = import.meta.env.PUBLIC_RAZORPAY_KEY_ID;
+---
+
+<PublicLayout title="Checkout">
+  <section class="mx-auto max-w-3xl px-4 py-12 sm:px-6">
+    <h1 class="font-display mb-8 text-3xl font-light">Checkout</h1>
+
+    <form id="checkout-form" class="space-y-8">
+      <!-- Contact -->
+      <fieldset class="border-navy/10 border bg-white p-5">
+        <legend class="text-navy/60 px-2 text-xs tracking-widest uppercase">Contact</legend>
+        <div class="mt-2 grid gap-4 md:grid-cols-2">
+          <label class="block">
+            <span class="sr-only">Email</span>
+            <input
+              name="email"
+              type="email"
+              required
+              placeholder="Email"
+              value={session?.email ?? ''}
+              class="border-navy/20 w-full border px-3 py-2"
+            />
+          </label>
+          <label class="block">
+            <span class="sr-only">Phone (10 digits)</span>
+            <input
+              name="phone"
+              type="tel"
+              required
+              placeholder="Phone (10 digits)"
+              pattern="[0-9]{10}"
+              class="border-navy/20 w-full border px-3 py-2"
+            />
+          </label>
+        </div>
+      </fieldset>
+
+      <!-- Address -->
+      <fieldset class="border-navy/10 border bg-white p-5">
+        <legend class="text-navy/60 px-2 text-xs tracking-widest uppercase">Shipping address</legend>
+        <div class="mt-2 grid gap-4 md:grid-cols-2">
+          <label class="block md:col-span-2">
+            <span class="sr-only">Full name</span>
+            <input
+              name="name"
+              required
+              placeholder="Full name"
+              class="border-navy/20 w-full border px-3 py-2"
+            />
+          </label>
+          <label class="block md:col-span-2">
+            <span class="sr-only">Address line 1</span>
+            <input
+              name="line1"
+              required
+              placeholder="Address line 1"
+              class="border-navy/20 w-full border px-3 py-2"
+            />
+          </label>
+          <label class="block md:col-span-2">
+            <span class="sr-only">Address line 2 (optional)</span>
+            <input
+              name="line2"
+              placeholder="Address line 2 (optional)"
+              class="border-navy/20 w-full border px-3 py-2"
+            />
+          </label>
+          <label class="block">
+            <span class="sr-only">City</span>
+            <input name="city" required placeholder="City" class="border-navy/20 w-full border px-3 py-2" />
+          </label>
+          <label class="block">
+            <span class="sr-only">State</span>
+            <input name="state" required placeholder="State" class="border-navy/20 w-full border px-3 py-2" />
+          </label>
+          <label class="block">
+            <span class="sr-only">PIN code</span>
+            <input
+              name="pincode"
+              required
+              placeholder="PIN code"
+              pattern="[0-9]{6}"
+              class="border-navy/20 w-full border px-3 py-2"
+            />
+          </label>
+        </div>
+      </fieldset>
+
+      <!-- Payment -->
+      <fieldset class="border-navy/10 border bg-white p-5">
+        <legend class="text-navy/60 px-2 text-xs tracking-widest uppercase">Payment</legend>
+        <input type="hidden" name="payment_method" value="prepaid" />
+        <div class="border-navy/20 mt-2 flex items-start gap-3 border p-3">
+          <div>
+            <p class="font-medium">Prepaid (UPI / Cards / Net Banking)</p>
+            <p class="text-navy/60 text-xs">Total: {formatINR(totalsPrepaid.total)}</p>
+          </div>
+        </div>
+      </fieldset>
+
+      {offerResult.notes.length > 0 && (
+        <ul class="space-y-1">
+          {offerResult.notes.map((n) => (
+            <li class="text-champagne text-xs">{n}</li>
+          ))}
+        </ul>
+      )}
+
+      <!-- Discount code -->
+      <div class="border-navy/10 border bg-white p-5">
+        <p class="text-navy/60 mb-2 text-xs tracking-widest uppercase">Discount code</p>
+        <div class="flex gap-2">
+          <input
+            id="discount-code-input"
+            type="text"
+            placeholder="Enter code"
+            class="border-navy/20 flex-1 border px-3 py-2 uppercase"
+          />
+          <button type="button" id="apply-code-btn"
+            class="bg-navy text-cream px-4 py-2 text-xs uppercase tracking-widest">
+            Apply
+          </button>
+        </div>
+        <p id="discount-msg" class="mt-1 text-xs hidden" aria-live="polite"></p>
+        <input type="hidden" name="discount_code" id="discount-code-hidden" value="" />
+      </div>
+
+      <button
+        type="submit"
+        class="bg-navy text-cream w-full py-4 text-xs font-semibold tracking-widest uppercase"
+        >Place order</button
+      >
+      <p id="checkout-error" class="hidden text-center text-sm text-red-700"></p>
+    </form>
+  </section>
+</PublicLayout>
+
+<script define:vars={{ rzpKey }}>
+  const form = document.getElementById('checkout-form');
+  const errEl = document.getElementById('checkout-error');
+  const showErr = (m) => {
+    errEl.textContent = m;
+    errEl.classList.remove('hidden');
+  };
+
+  function loadRzp() {
+    return new Promise((resolve) => {
+      if (window.Razorpay) return resolve();
+      const s = document.createElement('script');
+      s.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      s.onload = () => resolve();
+      document.body.appendChild(s);
+    });
+  }
+
+  const applyBtn = document.getElementById('apply-code-btn');
+  const codeInput = document.getElementById('discount-code-input');
+  const discountMsg = document.getElementById('discount-msg');
+  const codeHidden = document.getElementById('discount-code-hidden');
+
+  applyBtn?.addEventListener('click', async () => {
+    const code = codeInput.value.trim();
+    if (!code) return;
+    discountMsg.textContent = 'Checking…';
+    discountMsg.className = 'mt-1 text-xs text-navy/60';
+    try {
+      const r = await fetch('/api/checkout/apply-code', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ code }),
+      });
+      const j = await r.json();
+      if (!r.ok) {
+        discountMsg.textContent = j.error ?? 'Invalid code';
+        discountMsg.className = 'mt-1 text-xs text-red-600';
+        codeHidden.value = '';
+      } else {
+        discountMsg.textContent = `Code applied — ₹${(j.discountPaise / 100).toFixed(0)} off`;
+        discountMsg.className = 'mt-1 text-xs text-green-700';
+        codeHidden.value = j.code;
+      }
+    } catch {
+      discountMsg.textContent = 'Something went wrong';
+      discountMsg.className = 'mt-1 text-xs text-red-600';
+    }
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errEl.classList.add('hidden');
+    const fd = new FormData(form);
+    const payload = Object.fromEntries(fd);
+
+    // Prepaid path (COD removed from checkout UI)
+    const create = await fetch('/api/checkout/create-order', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!create.ok) return showErr('Could not create order. Please try again.');
+    const { rzp_order_id, amount, code, contact } = await create.json();
+
+    await loadRzp();
+    const rzpInstance = new window.Razorpay({
+      key: rzpKey,
+      order_id: rzp_order_id,
+      amount,
+      currency: 'INR',
+      name: 'qayra',
+      prefill: { email: contact.email, contact: contact.phone, name: contact.name },
+      theme: { color: '#231840' },
+      handler: async (resp) => {
+        const v = await fetch('/api/checkout/verify', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(resp),
+        });
+        if (!v.ok) return showErr('Payment verification failed. Contact support.');
+        const vj = await v.json();
+        window.location.href = `/checkout/success?code=${vj.code ?? code}`;
+      },
+      modal: { ondismiss: () => showErr('Payment cancelled.') },
+    });
+    rzpInstance.open();
+  });
+</script>

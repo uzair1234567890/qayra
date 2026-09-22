@@ -1,0 +1,48 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { requireRole } from '../../../lib/auth/session';
+
+const result = await requireRole(Astro as any, 'admin');
+if (result instanceof Response) return result;
+const error = Astro.url.searchParams.get('error');
+---
+
+<AdminLayout title="New discount">
+  {error && <p class="mb-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-[#C44]">{error}</p>}
+  <form action="/api/admin/discount-create" method="post" class="max-w-md space-y-4">
+    <div>
+      <label class="mb-1 block text-xs font-medium text-[#444]">Code (uppercase, A–Z 0–9 _ -)</label>
+      <input name="code" required pattern="[A-Z0-9_-]{3,40}" class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm font-mono uppercase" />
+    </div>
+    <div>
+      <label class="mb-1 block text-xs font-medium text-[#444]">Type</label>
+      <select name="type" class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm">
+        <option value="percent">Percent off</option>
+        <option value="fixed">Fixed amount off (₹)</option>
+      </select>
+    </div>
+    <div>
+      <label class="mb-1 block text-xs font-medium text-[#444]">Value (% or ₹ depending on type)</label>
+      <input name="value_input" type="number" required min="1" class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm font-mono" />
+    </div>
+    <div>
+      <label class="mb-1 block text-xs font-medium text-[#444]">Minimum order (₹, 0 = no minimum)</label>
+      <input name="min_subtotal_rupees" type="number" required min="0" value="0" class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm font-mono" />
+    </div>
+    <div>
+      <label class="mb-1 block text-xs font-medium text-[#444]">Max uses (blank = unlimited)</label>
+      <input name="max_uses" type="number" min="1" class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm font-mono" />
+    </div>
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="mb-1 block text-xs font-medium text-[#444]">Active from</label>
+        <input name="active_from" type="datetime-local" class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm" />
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-[#444]">Active until</label>
+        <input name="active_until" type="datetime-local" class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm" />
+      </div>
+    </div>
+    <button type="submit" class="rounded bg-[#1A1A1A] px-5 py-2 text-sm text-white">Create discount</button>
+  </form>
+</AdminLayout>

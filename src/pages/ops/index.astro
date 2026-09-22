@@ -1,0 +1,41 @@
+---
+import OpsLayout from '../../layouts/OpsLayout.astro';
+import KanbanColumn from '../../components/ops/KanbanColumn.astro';
+import OrderCard from '../../components/ops/OrderCard.astro';
+import EmptyState from '../../components/ui/EmptyState.astro';
+import { requireRole } from '../../lib/auth/session';
+import { loadQueue } from '../../lib/ops/queue';
+
+const result = await requireRole(Astro as any, 'operations');
+if (result instanceof Response) return result;
+
+const { toPack, toAwb, inTransit } = await loadQueue();
+const totalQueue = toPack.length + toAwb.length + inTransit.length;
+---
+
+<OpsLayout title="Queue">
+  <div class="mb-4 flex items-center justify-between rounded border border-[#F5EDD8]/20 bg-[#2A2010] px-4 py-3 text-sm text-[#F5EDD8]">
+    <span>Today's queue: <strong>{totalQueue}</strong> orders need action</span>
+    <span class="rounded-full bg-[#F5EDD8] px-2 py-0.5 text-xs font-semibold text-[#0F1620]">{totalQueue}</span>
+  </div>
+  <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
+    <KanbanColumn title="To Pack" count={toPack.length} highlight>
+      {toPack.length === 0
+        ? <EmptyState title="Inbox zero" body="All caught up — no orders waiting to be packed." />
+        : toPack.map((o) => (
+            <OrderCard order={o} action="Mark packed" actionHref={`/ops/orders/${o.code}`} urgent />
+          ))
+      }
+    </KanbanColumn>
+    <KanbanColumn title="Add AWB" count={toAwb.length}>
+      {toAwb.map((o) => (
+        <OrderCard order={o} action="+ Enter AWB" actionHref={`/ops/orders/${o.code}`} />
+      ))}
+    </KanbanColumn>
+    <KanbanColumn title="In Transit" count={inTransit.length}>
+      {inTransit.map((o) => (
+        <OrderCard order={o} action="Mark delivered" actionHref={`/ops/orders/${o.code}`} secondary />
+      ))}
+    </KanbanColumn>
+  </div>
+</OpsLayout>

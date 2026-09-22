@@ -1,0 +1,19 @@
+---
+import PublicLayout from '../../../layouts/PublicLayout.astro';
+import AccountNav from '../../../components/account/AccountNav.astro';
+import AddressForm from '../../../components/account/AddressForm.astro';
+import { requireRole } from '../../../lib/auth/session';
+
+const result = await requireRole(Astro as any, 'customer');
+if (result instanceof Response) return result;
+---
+
+<PublicLayout title="New address">
+  <section class="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-12 sm:px-6 md:flex-row">
+    <AccountNav />
+    <div class="flex-1">
+      <h1 class="font-display mb-6 text-3xl font-light">New address</h1>
+      <AddressForm action="/api/account/address-create" />
+    </div>
+  </section>
+</PublicLayout>

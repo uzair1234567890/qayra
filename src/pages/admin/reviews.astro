@@ -1,0 +1,79 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import EmptyState from '../../components/admin/EmptyState.astro';
+import { requireRole } from '../../lib/auth/session';
+import { listReviews } from '../../lib/admin/reviews';
+
+const result = await requireRole(Astro as any, 'admin');
+if (result instanceof Response) return result;
+
+const rawTab = Astro.url.searchParams.get('tab') ?? 'pending';
+const tab = (rawTab === 'published' || rawTab === 'hidden') ? rawTab : 'pending';
+
+const reviews = await listReviews(tab);
+
+const info = Astro.url.searchParams.get('info');
+const error = Astro.url.searchParams.get('error');
+
+function stars(rating: number) {
+  return '★'.repeat(rating) + '☆'.repeat(5 - rating);
+}
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+---
+
+<AdminLayout title="Reviews">
+  {info && <p class="mb-4 rounded border border-green-200 bg-green-50 p-3 text-sm text-[#0A8A00]">{info}</p>}
+  {error && <p class="mb-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-[#C44]">{error}</p>}
+
+  <div class="mb-4 flex gap-2">
+    <a href="?tab=pending" class={`px-3 py-1.5 text-sm rounded ${tab === 'pending' ? 'bg-[#1A1A1A] text-white' : 'border border-[#DDDDD8]'}`}>Pending</a>
+    <a href="?tab=published" class={`px-3 py-1.5 text-sm rounded ${tab === 'published' ? 'bg-[#1A1A1A] text-white' : 'border border-[#DDDDD8]'}`}>Published</a>
+    <a href="?tab=hidden" class={`px-3 py-1.5 text-sm rounded ${tab === 'hidden' ? 'bg-[#1A1A1A] text-white' : 'border border-[#DDDDD8]'}`}>Hidden</a>
+  </div>
+
+  {reviews.length === 0 ? (
+    <EmptyState message={`No ${tab} reviews.`} />
+  ) : (
+    <div class="space-y-3">
+      {reviews.map((r) => {
+        const scent = Array.isArray(r.scent) ? r.scent[0] : r.scent;
+        const profile = Array.isArray(r.profile) ? r.profile[0] : r.profile;
+        return (
+          <div class="rounded border border-[#EAEAEA] bg-white p-4 space-y-2">
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+              <span class="font-medium text-[#1B1F3B]">{scent?.name ?? '—'}</span>
+              <span class="text-[#888]">{profile?.full_name ?? 'Anonymous'}</span>
+              <span class="font-mono text-[#6D3B5E]">{stars(r.rating)}</span>
+              <span class="text-[#888] text-xs">{formatDate(r.created_at)}</span>
+              <span class={`text-xs font-medium px-2 py-0.5 rounded-full ${r.status === 'published' ? 'bg-green-100 text-green-700' : r.status === 'hidden' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                {r.status}
+              </span>
+            </div>
+            {r.title && <p class="text-sm font-medium">{r.title}</p>}
+            {r.body && <p class="text-sm text-[#444]">{r.body}</p>}
+            {r.photo_urls && r.photo_urls.length > 0 && (
+              <p class="text-xs text-[#888]">{r.photo_urls.length} photo{r.photo_urls.length > 1 ? 's' : ''}</p>
+            )}
+            <div class="flex gap-2 pt-1">
+              {(tab === 'pending' || tab === 'hidden') && (
+                <form action="/api/admin/review-publish" method="post">
+                  <input type="hidden" name="review_id" value={r.id} />
+                  <button type="submit" class="rounded bg-[#1A1A1A] px-3 py-1 text-xs text-white">Publish</button>
+                </form>
+              )}
+              {(tab === 'pending' || tab === 'published') && (
+                <form action="/api/admin/review-hide" method="post">
+                  <input type="hidden" name="review_id" value={r.id} />
+                  <button type="submit" class="rounded border border-[#DDDDD8] px-3 py-1 text-xs text-[#444]">Hide</button>
+                </form>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  )}
+</AdminLayout>

@@ -1,0 +1,17 @@
+---
+import { buildProductLd, buildBundleLd } from '../../lib/seo/jsonld';
+
+interface Props {
+  scent?: any;
+  bundle?: any;
+}
+const { scent, bundle } = Astro.props;
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? 'https://qayra.in';
+const ld = scent
+  ? buildProductLd(scent, siteUrl)
+  : bundle
+    ? buildBundleLd(bundle, siteUrl)
+    : null;
+---
+
+{ld && <script type="application/ld+json" set:html={JSON.stringify(ld)} is:inline />}

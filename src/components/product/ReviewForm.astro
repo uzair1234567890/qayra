@@ -1,0 +1,94 @@
+---
+import { supabaseAdmin } from '../../lib/supabase/admin';
+
+interface Props {
+  scentId: string;
+}
+
+const { scentId } = Astro.props;
+const session = Astro.locals.session;
+
+let canReview = false;
+let qualifyingOrderId: string | null = null;
+
+if (session) {
+  // Query from orders side so filters on profile_id + status are applied directly
+  const { data } = await supabaseAdmin
+    .from('orders')
+    .select('id, order_items!inner(scent_id)')
+    .eq('profile_id', session.userId)
+    .eq('status', 'delivered')
+    .eq('order_items.scent_id', scentId)
+    .limit(1);
+
+  if ((data ?? []).length > 0) {
+    canReview = true;
+    qualifyingOrderId = data![0].id;
+  }
+}
+---
+
+{canReview && qualifyingOrderId && (
+  <section class="mt-10 border-t border-navy/10 pt-10">
+    <h3 class="font-display mb-6 text-xl font-light">Write a Review</h3>
+
+    <form method="POST" action="/api/reviews/create" class="space-y-5">
+      <input type="hidden" name="scent_id" value={scentId} />
+      <input type="hidden" name="order_id" value={qualifyingOrderId} />
+
+      <!-- Star rating -->
+      <div>
+        <label class="mb-2 block text-xs tracking-widest text-navy/60 uppercase">
+          Rating <span class="text-aubergine">*</span>
+        </label>
+        <select
+          name="rating"
+          required
+          class="border border-navy/20 bg-white px-3 py-2 text-sm text-navy focus:border-navy focus:outline-none"
+        >
+          <option value="">Select a rating</option>
+          <option value="5">5 stars — Excellent</option>
+          <option value="4">4 stars — Good</option>
+          <option value="3">3 stars — Average</option>
+          <option value="2">2 stars — Below average</option>
+          <option value="1">1 star — Poor</option>
+        </select>
+      </div>
+
+      <!-- Title -->
+      <div>
+        <label class="mb-2 block text-xs tracking-widest text-navy/60 uppercase">
+          Title <span class="text-navy/40 normal-case">(optional)</span>
+        </label>
+        <input
+          type="text"
+          name="title"
+          maxlength="120"
+          placeholder="Summarise your experience"
+          class="w-full border border-navy/20 bg-white px-3 py-2 text-sm text-navy placeholder:text-navy/30 focus:border-navy focus:outline-none"
+        />
+      </div>
+
+      <!-- Body -->
+      <div>
+        <label class="mb-2 block text-xs tracking-widest text-navy/60 uppercase">
+          Review <span class="text-navy/40 normal-case">(optional)</span>
+        </label>
+        <textarea
+          name="body"
+          maxlength="2000"
+          rows="4"
+          placeholder="Tell us more about your experience with this scent…"
+          class="w-full border border-navy/20 bg-white px-3 py-2 text-sm text-navy placeholder:text-navy/30 focus:border-navy focus:outline-none"
+        ></textarea>
+      </div>
+
+      <button
+        type="submit"
+        class="bg-navy text-cream hover:bg-navy/90 px-6 py-3 text-sm tracking-widest uppercase transition-colors"
+      >
+        Submit Review
+      </button>
+    </form>
+  </section>
+)}

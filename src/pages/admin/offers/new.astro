@@ -1,0 +1,99 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { requireRole } from '../../../lib/auth/session';
+import { listActiveScentsForSelect } from '../../../lib/admin/scents';
+
+const result = await requireRole(Astro as any, 'admin');
+if (result instanceof Response) return result;
+
+const scents = await listActiveScentsForSelect();
+
+const error = Astro.url.searchParams.get('error');
+---
+
+<AdminLayout title="New auto-offer">
+  {error && <p class="mb-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-[#C44]">{error}</p>}
+  <form action="/api/admin/offer-create" method="post" class="max-w-md space-y-4">
+    <div>
+      <label class="mb-1 block text-xs font-medium text-[#444]">Name</label>
+      <input
+        name="name"
+        required
+        maxlength="100"
+        class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm"
+      />
+    </div>
+    <div>
+      <label class="mb-1 block text-xs font-medium text-[#444]">
+        <input type="checkbox" name="active" value="true" checked />
+        Active
+      </label>
+    </div>
+    <div>
+      <label class="mb-1 block text-xs font-medium text-[#444]">Rule type</label>
+      <select name="kind" id="kind-select" class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm">
+        <option value="free_shipping">Free shipping</option>
+        <option value="buy_x_get_y_pct">Buy X get Y% off</option>
+      </select>
+    </div>
+
+    <fieldset id="fields-free-shipping" class="space-y-4" style="border:none;padding:0;margin:0">
+      <div>
+        <label class="mb-1 block text-xs font-medium text-[#444]">Min order (₹)</label>
+        <input
+          name="min_subtotal_rupees"
+          type="number"
+          min="0"
+          value="0"
+          class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm"
+        />
+      </div>
+    </fieldset>
+
+    <fieldset id="fields-buy-x-get-y" class="space-y-4" style="display:none;border:none;padding:0;margin:0">
+      <div>
+        <label class="mb-1 block text-xs font-medium text-[#444]">Scent</label>
+        <select name="scent_id" class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm">
+          {(scents ?? []).map((s) => (
+            <option value={s.id}>{s.name}</option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-[#444]">Min qty</label>
+        <input
+          name="min_qty"
+          type="number"
+          min="2"
+          value="2"
+          class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm"
+        />
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-[#444]">% off extra item</label>
+        <input
+          name="pct_off_extra"
+          type="number"
+          min="1"
+          max="100"
+          value="50"
+          class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm"
+        />
+      </div>
+    </fieldset>
+
+    <button type="submit" class="rounded bg-[#1A1A1A] px-5 py-2 text-sm text-white">Create offer</button>
+  </form>
+</AdminLayout>
+
+<script>
+  const sel = document.getElementById('kind-select') as HTMLSelectElement;
+  const fsFS = document.getElementById('fields-free-shipping') as HTMLFieldSetElement;
+  const fsBXY = document.getElementById('fields-buy-x-get-y') as HTMLFieldSetElement;
+  function update() {
+    fsFS.style.display = sel.value === 'free_shipping' ? '' : 'none';
+    fsBXY.style.display = sel.value === 'buy_x_get_y_pct' ? '' : 'none';
+  }
+  sel.addEventListener('change', update);
+  update();
+</script>

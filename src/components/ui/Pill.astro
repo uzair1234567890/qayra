@@ -1,0 +1,14 @@
+---
+interface Props {
+  active?: boolean;
+  class?: string;
+}
+
+const { active = false, class: className = '' } = Astro.props;
+
+const cls = active
+  ? 'inline-block px-3 py-1.5 rounded-full font-display text-sm bg-navy text-cream border border-navy'
+  : 'inline-block px-3 py-1.5 rounded-full font-display text-sm border border-navy/30 text-navy';
+---
+
+<span class:list={[cls, className]}><slot /></span>

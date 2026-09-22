@@ -1,0 +1,70 @@
+---
+import StarRating from '../ui/StarRating.astro';
+
+interface ReviewItem {
+  rating: number;
+  title: string | null;
+  body: string | null;
+  photo_urls: string[];
+  created_at: string;
+  profile: { full_name: string | null } | null;
+}
+
+interface Aggregate {
+  count: number;
+  average: number;
+}
+
+interface Props {
+  reviews: ReviewItem[];
+  aggregate: Aggregate;
+}
+
+const { reviews, aggregate } = Astro.props;
+---
+
+<section class="mt-12 border-t border-navy/10 pt-10">
+  <h2 class="font-display mb-6 text-2xl font-light">Customer Reviews</h2>
+
+  <!-- Aggregate summary -->
+  <div class="mb-8 flex items-center gap-4">
+    <StarRating value={aggregate.average} count={aggregate.count} class="text-base" />
+    {aggregate.count > 0 && (
+      <span class="text-navy/60 text-sm">
+        {aggregate.average} out of 5 · {aggregate.count} {aggregate.count === 1 ? 'review' : 'reviews'}
+      </span>
+    )}
+  </div>
+
+  {reviews.length === 0 ? (
+    <p class="text-navy/50 italic">No reviews yet. Be the first!</p>
+  ) : (
+    <ul class="space-y-8">
+      {reviews.map((r) => {
+        const reviewerName = (r.profile as any)?.full_name ?? 'Anonymous';
+        const date = new Date(r.created_at).toLocaleDateString('en-IN', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+        });
+        return (
+          <li class="border-b border-navy/10 pb-8 last:border-0">
+            <div class="mb-2 flex items-center justify-between gap-4">
+              <div class="flex items-center gap-3">
+                <span class="text-sm font-medium text-navy">{reviewerName}</span>
+                <StarRating value={r.rating} class="text-xs" />
+              </div>
+              <time class="text-navy/40 shrink-0 text-xs">{date}</time>
+            </div>
+            {r.title && (
+              <p class="mb-1 text-sm font-semibold text-navy">{r.title}</p>
+            )}
+            {r.body && (
+              <p class="text-navy/70 text-sm leading-relaxed">{r.body}</p>
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  )}
+</section>

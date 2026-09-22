@@ -1,0 +1,39 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import DataTable from '../../../components/admin/DataTable.astro';
+import StatusPill from '../../../components/admin/StatusPill.astro';
+import EmptyState from '../../../components/admin/EmptyState.astro';
+import { requireRole } from '../../../lib/auth/session';
+import { listBundles } from '../../../lib/admin/bundles';
+import { formatINR } from '../../../lib/format';
+
+const result = await requireRole(Astro as any, 'admin');
+if (result instanceof Response) return result;
+const bundles = await listBundles();
+const error = Astro.url.searchParams.get('error');
+---
+
+<AdminLayout title="Bundles">
+  {error && <p class="mb-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-[#C44]">{error}</p>}
+  <div class="mb-4 flex items-center justify-between">
+    <h2 class="text-sm text-[#666]">{bundles.length} bundle{bundles.length !== 1 ? 's' : ''}</h2>
+    <a href="/admin/bundles/new" class="rounded bg-[#1A1A1A] px-4 py-2 text-xs text-white">+ New bundle</a>
+  </div>
+  {bundles.length === 0 ? (
+    <EmptyState message="No bundles yet." />
+  ) : (
+    <DataTable columns={['Name', 'Status', 'Price', 'Scents', '']}>
+      {bundles.map((b) => (
+        <tr class="border-t border-[#F4F4F4] hover:bg-[#FAFAF8]">
+          <td class="px-3 py-2 text-sm">{b.name}</td>
+          <td class="px-3 py-2"><StatusPill value={b.status} /></td>
+          <td class="px-3 py-2 font-mono text-xs">{formatINR(b.price)}</td>
+          <td class="px-3 py-2 text-xs text-[#666]">{(b.bundle_items as any)?.[0]?.count ?? 0}</td>
+          <td class="px-3 py-2 text-right text-xs">
+            <a href={`/admin/bundles/${b.id}`} class="text-[#0066CC]">Edit</a>
+          </td>
+        </tr>
+      ))}
+    </DataTable>
+  )}
+</AdminLayout>

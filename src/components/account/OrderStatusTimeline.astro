@@ -1,0 +1,41 @@
+---
+import { ACTIVE_STEPS, TERMINAL_STATUSES } from '../../lib/order-status';
+
+interface Props {
+  current: string;
+}
+const { current } = Astro.props;
+const isTerminal = (TERMINAL_STATUSES as readonly string[]).includes(current);
+const idx = isTerminal ? -1 : ACTIVE_STEPS.indexOf(current as (typeof ACTIVE_STEPS)[number]);
+---
+
+{isTerminal && (
+  <p class="bg-aubergine/10 text-aubergine mb-4 rounded px-3 py-2 text-center text-xs tracking-widest uppercase">
+    {current}
+  </p>
+)}
+<ol class:list={['flex items-start justify-between text-xs tracking-widest uppercase', isTerminal && 'opacity-40']}>
+  {
+    ACTIVE_STEPS.map((s, i) => (
+      <li class="relative flex flex-1 flex-col items-center text-center">
+        {i > 0 && (
+          <span
+            class:list={[
+              'absolute top-3 right-1/2 h-px w-full',
+              i <= idx ? 'bg-champagne' : 'bg-navy/15',
+            ]}
+          />
+        )}
+        <span
+          class:list={[
+            'relative z-10 flex h-6 w-6 items-center justify-center rounded-full',
+            i <= idx ? 'bg-champagne text-navy' : 'bg-navy/10 text-navy/40',
+          ]}
+        >
+          {i <= idx ? '✓' : ''}
+        </span>
+        <span class="text-navy/70 mt-2">{s}</span>
+      </li>
+    ))
+  }
+</ol>

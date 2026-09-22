@@ -1,0 +1,45 @@
+---
+interface Props {
+  address: {
+    id: string;
+    name: string;
+    line1: string;
+    line2: string | null;
+    city: string;
+    state: string;
+    pincode: string;
+    phone: string;
+    is_default: boolean;
+  };
+}
+const { address: a } = Astro.props;
+---
+
+<div
+  class:list={['border bg-white p-4 text-sm', a.is_default ? 'border-champagne' : 'border-navy/10']}
+>
+  {a.is_default && <p class="text-champagne mb-2 text-[10px] tracking-widest uppercase">Default</p>}
+  <p class="font-medium">{a.name}</p>
+  <p>{a.line1}{a.line2 ? `, ${a.line2}` : ''}</p>
+  <p>{a.city}, {a.state} {a.pincode}</p>
+  <p class="text-navy/60">{a.phone}</p>
+  <div class="mt-3 flex gap-3 text-xs tracking-widest uppercase">
+    <a href={`/account/addresses/${a.id}/edit`} class="underline">Edit</a>
+    {
+      !a.is_default && (
+        <form action="/api/account/address-default" method="post">
+          <input type="hidden" name="id" value={a.id} />
+          <button class="underline">Set default</button>
+        </form>
+      )
+    }
+    <form
+      action="/api/account/address-delete"
+      method="post"
+      onsubmit="return confirm('Delete this address?')"
+    >
+      <input type="hidden" name="id" value={a.id} />
+      <button class="text-red-700 underline">Delete</button>
+    </form>
+  </div>
+</div>

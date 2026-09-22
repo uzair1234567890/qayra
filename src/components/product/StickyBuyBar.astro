@@ -1,0 +1,60 @@
+---
+import { formatINR } from '../../lib/format';
+import type { Scent } from '../../lib/catalog';
+interface Props {
+  scent: Scent;
+}
+const { scent } = Astro.props;
+const inStock = scent.stock_qty > 0;
+---
+
+<div
+  data-sticky-buy
+  class="bg-navy text-cream fixed right-0 bottom-0 left-0 z-20 flex items-center justify-between gap-3 px-4 py-3 shadow-[0_-4px_14px_rgba(0,0,0,0.15)]"
+>
+  <div>
+    <p class="font-display text-base leading-tight">{scent.name}</p>
+    <p class="text-cream/80 text-xs">
+      {formatINR(scent.base_price)} · {inStock ? 'in stock' : 'sold out'}
+    </p>
+  </div>
+  <button
+    type="button"
+    data-add-to-bag
+    data-loading
+    data-success-label="Added ✓"
+    data-scent-id={scent.id}
+    disabled={!inStock}
+    class="bg-champagne text-near-black px-5 py-2.5 text-xs font-semibold tracking-widest uppercase disabled:opacity-50"
+  >
+    Add to cart
+  </button>
+</div>
+<script>
+  function armBuyButton(): void {
+    const btn = document.querySelector<HTMLButtonElement>('[data-add-to-bag]');
+    if (!btn || btn.dataset.bound) return;
+    btn.dataset.bound = '';
+    btn.addEventListener('click', () => {
+      void window.qaButton
+        .withState(btn, async () => {
+          const scentId = btn.dataset.scentId;
+          const r = await window.qaButton.fetchOk('/api/cart/add', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ scent_id: scentId, quantity: 1 }),
+          });
+          const { bagCount } = await r.json();
+          const counter = document.querySelector('[data-bag-count]');
+          if (counter && typeof bagCount === 'number') counter.textContent = String(bagCount);
+        })
+        .catch(() => {});
+    });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', armBuyButton);
+  } else {
+    armBuyButton();
+  }
+  document.addEventListener('astro:page-load', armBuyButton);
+</script>

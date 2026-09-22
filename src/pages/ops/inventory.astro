@@ -1,0 +1,70 @@
+---
+import OpsLayout from '../../layouts/OpsLayout.astro';
+import { requireRole } from '../../lib/auth/session';
+import { listInventory } from '../../lib/ops/inventory';
+
+const result = await requireRole(Astro as any, 'operations');
+if (result instanceof Response) return result;
+
+const scents = await listInventory();
+const lowCount = scents.filter((s) => s.stock_qty < 20).length;
+---
+
+<OpsLayout title="Inventory">
+  <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <h1 class="text-lg font-semibold text-[#E8ECF0]">Inventory</h1>
+      {lowCount > 0 ? (
+        <p class="mt-1 text-sm text-[#F5EDD8]">
+          {lowCount} {lowCount === 1 ? 'item needs' : 'items need'} restocking
+        </p>
+      ) : (
+        <p class="mt-1 text-sm text-[#8899AA]">All items are well-stocked.</p>
+      )}
+    </div>
+    <p class="text-xs text-[#8899AA]">Edit inventory in the admin panel.</p>
+  </div>
+
+  <div class="overflow-x-auto rounded border border-[#2A3340]">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-[#2A3340] bg-[#1A2330] text-left text-xs font-medium uppercase tracking-wide text-[#8899AA]">
+          <th class="px-4 py-3">Name</th>
+          <th class="px-4 py-3 text-right">Stock</th>
+          <th class="px-4 py-3">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {scents.length === 0 && (
+          <tr>
+            <td colspan="3" class="px-4 py-10 text-center text-[#8899AA]">No scents found.</td>
+          </tr>
+        )}
+        {scents.map((s) => {
+          const isLow = s.stock_qty < 20;
+          return (
+            <tr
+              class={`border-b border-[#2A3340] last:border-0 ${
+                isLow
+                  ? 'border-l-2 border-l-[#F5EDD8] bg-[#2A2010]'
+                  : 'bg-[#151E2B]'
+              }`}
+            >
+              <td class="px-4 py-3 font-medium text-[#E8ECF0]">{s.name}</td>
+              <td class={`px-4 py-3 text-right font-mono ${isLow ? 'font-semibold text-[#F5EDD8]' : 'text-[#E8ECF0]'}`}>
+                {s.stock_qty}
+              </td>
+              <td class="px-4 py-3">
+                {s.active ? (
+                  <span class="rounded-full bg-green-900/50 px-2 py-0.5 text-xs font-medium text-green-400">Active</span>
+                ) : (
+                  <span class="rounded-full bg-[#1A2330] px-2 py-0.5 text-xs font-medium text-[#8899AA]">Inactive</span>
+                )}
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  </div>
+</OpsLayout>

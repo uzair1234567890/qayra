@@ -1,0 +1,37 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import DataTable from '../../../components/admin/DataTable.astro';
+import EmptyState from '../../../components/admin/EmptyState.astro';
+import { requireRole } from '../../../lib/auth/session';
+import { listBanners } from '../../../lib/admin/banners';
+
+const result = await requireRole(Astro as any, 'admin');
+if (result instanceof Response) return result;
+const banners = await listBanners();
+const error = Astro.url.searchParams.get('error');
+---
+
+<AdminLayout title="Banners">
+  {error && <p class="mb-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-[#C44]">{error}</p>}
+  <div class="mb-4 flex items-center justify-between">
+    <h2 class="text-sm text-[#666]">{banners.length} banner{banners.length !== 1 ? 's' : ''}</h2>
+    <a href="/admin/banners/new" class="rounded bg-[#1A1A1A] px-4 py-2 text-xs text-white">+ New banner</a>
+  </div>
+  {banners.length === 0 ? (
+    <EmptyState message="No banners yet." />
+  ) : (
+    <DataTable columns={['Position', 'Headline', 'Active from', 'Active until', '']}>
+      {banners.map((b) => (
+        <tr class="border-t border-[#F4F4F4] hover:bg-[#FAFAF8]">
+          <td class="px-3 py-2 text-xs capitalize">{b.position}</td>
+          <td class="px-3 py-2 text-xs">{b.headline ?? '—'}</td>
+          <td class="px-3 py-2 text-xs">{b.active_from ? new Date(b.active_from).toLocaleDateString('en-IN') : '—'}</td>
+          <td class="px-3 py-2 text-xs">{b.active_until ? new Date(b.active_until).toLocaleDateString('en-IN') : '—'}</td>
+          <td class="px-3 py-2 text-right text-xs">
+            <a href={`/admin/banners/${b.id}`} class="text-[#0066CC]">Edit</a>
+          </td>
+        </tr>
+      ))}
+    </DataTable>
+  )}
+</AdminLayout>

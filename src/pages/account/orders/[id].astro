@@ -1,0 +1,103 @@
+---
+import PublicLayout from '../../../layouts/PublicLayout.astro';
+import AccountNav from '../../../components/account/AccountNav.astro';
+import OrderStatusTimeline from '../../../components/account/OrderStatusTimeline.astro';
+import { requireRole } from '../../../lib/auth/session';
+import { getOrderByCode } from '../../../lib/orders';
+import { formatINR } from '../../../lib/format';
+
+const result = await requireRole(Astro as any, 'customer');
+if (result instanceof Response) return result;
+const code = Astro.params.id!;
+const order = await getOrderByCode(Astro.request, Astro.cookies, result.userId, code);
+if (!order) return Astro.redirect('/account/orders', 302);
+const addr = (order.address_snapshot ?? null) as {
+  name: string; line1: string; line2?: string | null;
+  city: string; state: string; pincode: string; phone: string;
+} | null;
+// Supabase's nested join may return shipments as a single object (1:1, since
+// shipments.order_id is the primary key) OR as an array depending on detection.
+// Handle both shapes defensively.
+type ShipmentRow = { courier_name: string; awb_number: string; dispatched_at?: string | null };
+const rawShipment = (order as any).shipments as ShipmentRow | ShipmentRow[] | null;
+const shipment: ShipmentRow | undefined = Array.isArray(rawShipment)
+  ? rawShipment[0]
+  : (rawShipment ?? undefined);
+const orderItems = (order as any).order_items as {
+  name_snapshot: string; price_snapshot: number; quantity: number;
+}[];
+---
+
+<PublicLayout title={`Order ${order.code}`}>
+  <section class="mx-auto max-w-5xl px-4 py-12 sm:px-6">
+    <div class="flex flex-col gap-8 md:flex-row">
+      <AccountNav />
+      <div class="flex-1 space-y-8">
+        <header>
+          <p class="text-navy/60 font-mono text-xs tracking-widest uppercase">{order.code}</p>
+          <h1 class="font-display text-3xl font-light">
+            Order placed {
+              new Date(order.created_at).toLocaleDateString('en-IN', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+              })
+            }
+          </h1>
+        </header>
+
+        <div class="border-navy/10 border bg-white p-5">
+          <OrderStatusTimeline current={order.status} />
+          {
+            shipment && (
+              <div class="border-navy/10 mt-6 border-t pt-4 text-sm">
+                <p>
+                  Courier: <strong>{shipment.courier_name}</strong>
+                </p>
+                <p>
+                  AWB: <span class="font-mono">{shipment.awb_number}</span>
+                </p>
+              </div>
+            )
+          }
+        </div>
+
+        <div class="border-navy/10 border bg-white p-5">
+          <p class="text-navy/60 mb-3 text-xs tracking-widest uppercase">Items</p>
+          {
+            orderItems.map((it) => (
+              <div class="border-navy/10 flex justify-between border-t py-2 text-sm first:border-0">
+                <span>
+                  {it.name_snapshot} × {it.quantity}
+                </span>
+                <span>{formatINR(it.price_snapshot * it.quantity)}</span>
+              </div>
+            ))
+          }
+          <div class="border-navy/20 mt-2 flex justify-between border-t pt-2 font-medium">
+            <span>Total</span><span>{formatINR(order.total)}</span>
+          </div>
+        </div>
+
+        {addr && (
+          <div class="border-navy/10 border bg-white p-5 text-sm">
+            <p class="text-navy/60 mb-2 text-xs tracking-widest uppercase">Ship to</p>
+            <p>{addr.name}</p>
+            <p>{addr.line1}{addr.line2 ? `, ${addr.line2}` : ''}</p>
+            <p>{addr.city}, {addr.state} {addr.pincode}</p>
+            <p class="text-navy/60 mt-1">{addr.phone}</p>
+          </div>
+        )}
+
+        <div class="flex flex-wrap gap-3">
+          <form action="/api/account/reorder" method="post">
+            <input type="hidden" name="code" value={order.code} />
+            <button class="bg-navy text-cream px-5 py-3 text-xs tracking-widest uppercase"
+              >Reorder this</button
+            >
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+</PublicLayout>

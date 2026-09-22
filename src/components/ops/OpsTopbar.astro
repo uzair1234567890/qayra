@@ -1,0 +1,38 @@
+---
+import NewOrdersBadge from '../live/NewOrdersBadge';
+import { supabaseAdmin } from '../../lib/supabase/admin';
+
+interface Props {
+  title: string;
+  userEmail: string;
+}
+const { title, userEmail } = Astro.props;
+
+const since = new Date(new Date().toDateString()).toISOString();
+const { count: toPack } = await supabaseAdmin
+  .from('orders')
+  .select('id', { count: 'exact', head: true })
+  .gte('created_at', since)
+  .eq('status', 'paid');
+---
+
+<header class="flex items-center justify-between border-b border-[#2A3340] bg-[#1A2330] px-4 py-3">
+  <div class="flex items-center gap-3">
+    <span class="font-semibold">qayra ops</span>
+    <span class="rounded bg-[#F5EDD8]/15 px-2 py-0.5 text-[10px] tracking-widest text-[#F5EDD8] uppercase">Operations</span>
+    <span class="ml-3 text-sm text-[#E8ECF0]/60">/ {title}</span>
+  </div>
+  <div class="flex items-center gap-3 text-sm">
+    <a href="/ops" class="opacity-70 hover:opacity-100">
+      Queue <NewOrdersBadge client:idle initial={toPack ?? 0} countUrl="/api/ops/queue-count" />
+    </a>
+    <a href="/ops/returns" class="opacity-70 hover:opacity-100">Returns</a>
+    <a href="/ops/inventory" class="opacity-70 hover:opacity-100">Inventory</a>
+    <a href="/ops/delivered" class="opacity-70 hover:opacity-100">Delivered</a>
+    <span class="mx-2 text-[#E8ECF0]/50">|</span>
+    <span class="text-[#E8ECF0]/70">{userEmail}</span>
+    <form action="/api/auth/sign-out" method="post">
+      <button class="underline opacity-70 hover:opacity-100">Sign out</button>
+    </form>
+  </div>
+</header>

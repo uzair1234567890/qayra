@@ -1,0 +1,35 @@
+---
+import type { QueueOrder } from '../../lib/ops/queue';
+import { formatINR } from '../../lib/format';
+interface Props {
+  order: QueueOrder;
+  actionHref: string;
+  action: string;
+  urgent?: boolean;
+  secondary?: boolean;
+}
+const { order, actionHref, action, urgent = false, secondary = false } = Astro.props;
+const isCod = order.payment_method === 'cod';
+---
+
+<div class={`rounded border p-3 text-sm ${urgent ? 'border-[#F5EDD8]/20 bg-[#1A2310]' : 'border-[#2A3340] bg-[#151E2B]'}`}>
+  <div class="flex items-start justify-between gap-2">
+    <div>
+      <span class="font-mono text-xs font-semibold text-[#E8ECF0]">{order.code}</span>
+      {isCod && <span class="ml-2 rounded bg-[#F5EDD8]/20 px-1.5 py-0.5 text-[10px] font-semibold text-[#F5EDD8]">COD</span>}
+    </div>
+    <span class="font-mono text-xs text-[#E8ECF0]/60">{formatINR(order.total)}</span>
+  </div>
+  {order.full_name && <p class="mt-1 text-xs text-[#E8ECF0]/60">{order.full_name}</p>}
+  {order.items_label && <p class="mt-1 text-[10px] text-[#E8ECF0]/40 truncate">{order.items_label}</p>}
+  <a
+    href={actionHref}
+    class={`mt-2 block rounded px-3 py-1.5 text-center text-xs font-medium ${
+      secondary
+        ? 'bg-[#2A3340] text-[#E8ECF0]/80 hover:bg-[#333E50]'
+        : urgent
+        ? 'bg-[#F5EDD8] text-[#0F1620] hover:bg-[#EDD8B0]'
+        : 'bg-[#2A4A3A] text-[#6FCF97] hover:bg-[#2A5540]'
+    }`}
+  >{action}</a>
+</div>

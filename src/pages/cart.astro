@@ -1,0 +1,107 @@
+---
+import PublicLayout from '../layouts/PublicLayout.astro';
+import CartLineItem from '../components/cart/CartLineItem.astro';
+import CartSummary from '../components/cart/CartSummary.astro';
+import { getOrCreateCart, getCartLines } from '../lib/cart';
+import { computeTotals } from '../lib/pricing';
+import { readSetting } from '../lib/settings';
+import { evaluateOffers } from '../lib/offers';
+
+const cartId = await getOrCreateCart(Astro.request, Astro.cookies, Astro.locals.cartToken);
+const lines = await getCartLines(Astro.request, Astro.cookies, cartId);
+const [freeShippingPaise, flatShippingPaise, codSurchargePaise] = await Promise.all([
+  readSetting('free_shipping_threshold', 49900),
+  readSetting('flat_shipping', 5000),
+  readSetting('cod_surcharge', 5000),
+]);
+const totals = computeTotals({
+  lines: lines.map((l) => ({ price: l.price, quantity: l.quantity })),
+  paymentMethod: 'prepaid',
+  discountPaise: 0,
+  freeShippingPaise,
+  flatShippingPaise,
+  codSurchargePaise,
+});
+const offerResult = await evaluateOffers({
+  lines: lines.map((l) => ({ scent_id: l.scent_id, bundle_id: l.bundle_id, price: l.price, quantity: l.quantity })),
+  subtotalAfterDiscount: totals.subtotal - totals.discount,
+});
+const finalTotals = computeTotals({
+  lines: lines.map((l) => ({ price: l.price, quantity: l.quantity })),
+  paymentMethod: 'prepaid',
+  discountPaise: offerResult.extraDiscount,
+  freeShippingPaise: offerResult.freeShipping ? totals.subtotal + 1 : freeShippingPaise,
+  flatShippingPaise,
+  codSurchargePaise,
+});
+const reordered = Astro.url.searchParams.has('reordered');
+const notice = Astro.url.searchParams.get('notice');
+---
+<PublicLayout title="Your cart">
+  {reordered && (
+    <div class="bg-champagne text-navy px-4 py-3 text-center text-sm">
+      Your items are back in the cart — review and check out.
+    </div>
+  )}
+  {notice && (
+    <div class="bg-navy/10 text-navy px-4 py-3 text-center text-sm">
+      {notice}
+    </div>
+  )}
+  <section class="mx-auto max-w-3xl px-4 py-12 sm:px-6">
+    <h1 class="font-display mb-8 text-4xl font-light">Your cart</h1>
+    {lines.length === 0 ? (
+      <div class="py-16 text-center">
+        <p class="text-navy/70 mb-6">Your cart is empty.</p>
+        <a href="/products" class="bg-navy text-cream inline-block px-6 py-3 text-xs tracking-widest uppercase">Shop products</a>
+      </div>
+    ) : (
+      <div class="grid gap-10 md:grid-cols-3">
+        <div class="md:col-span-2">
+          {lines.map((l) => <CartLineItem line={l} />)}
+        </div>
+        <aside class="border-navy/10 self-start border bg-white p-5 md:sticky md:top-24">
+          <CartSummary totals={finalTotals} cta="Checkout" href="/checkout" />
+          {offerResult.notes.length > 0 && (
+            <ul class="mt-2 space-y-1">
+              {offerResult.notes.map((n) => (
+                <li class="text-champagne text-xs">{n}</li>
+              ))}
+            </ul>
+          )}
+        </aside>
+      </div>
+    )}
+  </section>
+</PublicLayout>
+<script>
+  document.querySelectorAll('[data-line-id]').forEach((el) => {
+    const id = (el as HTMLElement).dataset.lineId!;
+    const qtyEl = el.querySelector('[data-qty]') as HTMLElement | null;
+    const decBtn = el.querySelector('[data-qty-dec]') as HTMLButtonElement | null;
+    const incBtn = el.querySelector('[data-qty-inc]') as HTMLButtonElement | null;
+    const removeBtn = el.querySelector('[data-remove]') as HTMLButtonElement | null;
+    if (!qtyEl || !decBtn || !incBtn || !removeBtn) return;
+
+    const submit = (btn: HTMLButtonElement, quantity: number): void => {
+      void window.qaButton
+        .withState(btn, async () => {
+          await window.qaButton.fetchOk('/api/cart/update', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ id, quantity }),
+          });
+          location.reload();
+        })
+        .catch(() => {});
+    };
+
+    decBtn.addEventListener('click', () =>
+      submit(decBtn, Math.max(0, parseInt(qtyEl.textContent ?? '1', 10) - 1)),
+    );
+    incBtn.addEventListener('click', () =>
+      submit(incBtn, parseInt(qtyEl.textContent ?? '1', 10) + 1),
+    );
+    removeBtn.addEventListener('click', () => submit(removeBtn, 0));
+  });
+</script>

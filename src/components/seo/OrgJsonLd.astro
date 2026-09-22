@@ -1,0 +1,7 @@
+---
+import { buildOrgLd } from '../../lib/seo/jsonld';
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? 'https://qayra.in';
+const ld = buildOrgLd(siteUrl);
+---
+
+<script type="application/ld+json" set:html={JSON.stringify(ld)} is:inline />

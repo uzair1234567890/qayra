@@ -1,0 +1,23 @@
+---
+import ScentCurl from './ScentCurl.astro';
+interface Props {
+  class?: string;
+  scale?: number;
+  href?: string;
+  animated?: boolean;
+}
+const { class: className = '', scale = 1, href, animated = true } = Astro.props;
+const curlSize = 42 * scale;
+const wordSize = `${4 * scale}rem`;
+const Tag = href ? 'a' : 'span';
+---
+
+<Tag href={href} class:list={['text-navy inline-flex flex-col items-center gap-2', className]}>
+  <ScentCurl size={curlSize} stroke="currentColor" class="text-champagne" animated={animated} />
+  <span
+    class="font-display leading-none font-normal tracking-tight"
+    style={`font-size:${wordSize};`}
+  >
+    qayra
+  </span>
+</Tag>

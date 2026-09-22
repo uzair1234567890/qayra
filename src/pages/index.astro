@@ -1,0 +1,60 @@
+---
+import PublicLayout from '../layouts/PublicLayout.astro';
+import HeroFromBanner from '../components/home/HeroFromBanner.astro';
+import FadeUp from '../components/motion/FadeUp.astro';
+import ProductCard from '../components/product/ProductCard.astro';
+import Button from '../components/ui/Button.astro';
+import StarRating from '../components/ui/StarRating.astro';
+import { getActiveScents } from '../lib/catalog';
+import { formatINR } from '../lib/format';
+import { readSetting } from '../lib/settings';
+
+const [scents, freeShippingPaise] = await Promise.all([
+  getActiveScents(Astro.request, Astro.cookies),
+  readSetting('free_shipping_threshold', 49900),
+]);
+---
+
+<PublicLayout title="Quiet scents, long drives">
+  <!-- Hero: CMS banner or static fallback -->
+  <HeroFromBanner />
+
+  <!-- Shipping banner -->
+  <FadeUp>
+    <section class="bg-navy text-champagne py-3 text-center text-xs tracking-widest uppercase">
+      Free shipping on prepaid orders over {formatINR(freeShippingPaise)}
+    </section>
+  </FadeUp>
+
+  <!-- Scent grid -->
+  <section class="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+    <p class="text-navy/60 mb-8 text-xs tracking-[0.3em] uppercase">All scents</p>
+    <div class="grid grid-cols-2 gap-6 md:grid-cols-4 md:gap-8">
+      {scents.map((s, i) => <FadeUp delay={i * 60}><ProductCard scent={s} /></FadeUp>)}
+    </div>
+  </section>
+
+  <FadeUp>
+    <section class="bg-cream/0 border-navy/10 border-t">
+      <div class="mx-auto max-w-4xl px-4 py-16 sm:px-6">
+        <p class="text-navy/60 mb-8 text-center text-xs tracking-[0.3em] uppercase">
+          What our customers say
+        </p>
+        <div class="grid gap-6 md:grid-cols-2">
+          <div class="border-navy/10 border bg-white p-6">
+            <StarRating value={5} />
+            <p class="text-navy/80 mt-3 text-sm">"Best scent I've had in any car. Long-lasting."</p>
+            <p class="text-navy/50 mt-2 text-xs tracking-widest uppercase">Riya · Mumbai</p>
+          </div>
+          <div class="border-navy/10 border bg-white p-6">
+            <StarRating value={5} />
+            <p class="text-navy/80 mt-3 text-sm">
+              "Velvet Midnight is unreal. Ordered the starter set next."
+            </p>
+            <p class="text-navy/50 mt-2 text-xs tracking-widest uppercase">Arjun · Delhi</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </FadeUp>
+</PublicLayout>

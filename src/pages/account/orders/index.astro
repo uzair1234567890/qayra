@@ -1,0 +1,63 @@
+---
+import PublicLayout from '../../../layouts/PublicLayout.astro';
+import AccountNav from '../../../components/account/AccountNav.astro';
+import { requireRole } from '../../../lib/auth/session';
+import { getCustomerOrders } from '../../../lib/orders';
+import { formatINR } from '../../../lib/format';
+
+const result = await requireRole(Astro as any, 'customer');
+if (result instanceof Response) return result;
+const orders = await getCustomerOrders(Astro.request, Astro.cookies, result.userId);
+---
+
+<PublicLayout title="My orders">
+  <section class="mx-auto max-w-5xl px-4 py-12 sm:px-6">
+    <div class="flex flex-col gap-8 md:flex-row">
+      <AccountNav />
+      <div class="flex-1">
+        <h1 class="font-display mb-6 text-3xl font-light">My orders</h1>
+        {
+          orders.length === 0 ? (
+            <p class="text-navy/70">
+              No orders yet.{' '}
+              <a href="/products" class="underline">
+                Shop products
+              </a>
+              .
+            </p>
+          ) : (
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="text-navy/60 text-left text-xs tracking-widest uppercase">
+                  <th class="py-2">Order</th>
+                  <th>Date</th>
+                  <th>Status</th>
+                  <th>Total</th>
+                  <th />
+                </tr>
+              </thead>
+              <tbody>
+                {orders.map((o) => (
+                  <tr class="border-navy/10 border-t">
+                    <td class="py-3 font-mono">{o.code}</td>
+                    <td>{new Date(o.created_at).toLocaleDateString('en-IN')}</td>
+                    <td class="text-xs tracking-widest uppercase">{o.status}</td>
+                    <td>{formatINR(o.total)}</td>
+                    <td>
+                      <a
+                        href={`/account/orders/${o.code}`}
+                        class="text-xs tracking-widest uppercase underline"
+                      >
+                        View →
+                      </a>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )
+        }
+      </div>
+    </div>
+  </section>
+</PublicLayout>

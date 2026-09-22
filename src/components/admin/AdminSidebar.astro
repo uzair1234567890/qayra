@@ -1,0 +1,63 @@
+---
+import NewOrdersBadge from '../live/NewOrdersBadge';
+import { supabaseAdmin } from '../../lib/supabase/admin';
+
+const path = Astro.url.pathname;
+const groups = [
+  { title: 'Overview', items: [
+    { href: '/admin', label: 'Dashboard' },
+    { href: '/admin/reports', label: 'Reports' },
+  ]},
+  { title: 'Sell', items: [
+    { href: '/admin/orders', label: 'Orders' },
+    { href: '/admin/products', label: 'Products' },
+    { href: '/admin/bundles', label: 'Bundles' },
+    { href: '/admin/inventory', label: 'Inventory' },
+  ]},
+  { title: 'Marketing', items: [
+    { href: '/admin/discounts', label: 'Discounts' },
+    { href: '/admin/offers', label: 'Auto-offers' },
+    { href: '/admin/banners', label: 'Banners' },
+    { href: '/admin/reviews', label: 'Reviews' },
+  ]},
+  { title: 'People', items: [
+    { href: '/admin/customers', label: 'Customers' },
+    { href: '/admin/team', label: 'Team' },
+  ]},
+  { title: 'Setup', items: [
+    { href: '/admin/settings', label: 'Settings' },
+  ]},
+];
+
+const since = new Date(new Date().toDateString()).toISOString();
+const { count: ordersToday } = await supabaseAdmin
+  .from('orders')
+  .select('id', { count: 'exact', head: true })
+  .gte('created_at', since)
+  .in('status', ['paid', 'packed', 'shipped', 'delivered']);
+---
+
+<aside class="w-52 flex-shrink-0 bg-[#1A1A1A] py-4 text-sm text-white">
+  <a href="/admin" class="block px-4 pb-4 font-semibold">qayra<span class="text-champagne">.</span></a>
+  {groups.map((g) => (
+    <div class="mt-4">
+      <p class="mb-1 px-4 text-[10px] tracking-widest text-white/40 uppercase">{g.title}</p>
+      {g.items.map((it) => {
+        const active = path === it.href || (it.href !== '/admin' && path.startsWith(it.href + '/'));
+        return (
+          <a
+            href={it.href}
+            class:list={[
+              'block px-4 py-1.5 hover:bg-white/5',
+              active && 'text-champagne border-champagne border-l-2 bg-white/10 pl-[14px]',
+            ]}
+          >
+            {it.href === '/admin/orders' ? (
+              <>Orders <NewOrdersBadge client:idle initial={ordersToday ?? 0} /></>
+            ) : it.label}
+          </a>
+        );
+      })}
+    </div>
+  ))}
+</aside>

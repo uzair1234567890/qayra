@@ -1,0 +1,105 @@
+---
+import OpsLayout from '../../layouts/OpsLayout.astro';
+import { requireRole } from '../../lib/auth/session';
+import { listDelivered } from '../../lib/ops/delivered';
+import { formatINR } from '../../lib/format';
+
+const result = await requireRole(Astro as any, 'operations');
+if (result instanceof Response) return result;
+
+const PAGE_SIZE = 20;
+const rawPage = Number(Astro.url.searchParams.get('page') ?? '1');
+const page = Number.isFinite(rawPage) && rawPage >= 1 ? Math.floor(rawPage) : 1;
+
+const { orders, total } = await listDelivered({ page, pageSize: PAGE_SIZE });
+const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+function fmtDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+---
+
+<OpsLayout title="Delivered Archive">
+  <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <h1 class="text-lg font-semibold text-[#E8ECF0]">Delivered Archive</h1>
+      <p class="mt-1 text-sm text-[#8899AA]">{total} orders — delivered &amp; returned</p>
+    </div>
+  </div>
+
+  <div class="overflow-x-auto rounded border border-[#2A3340]">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-[#2A3340] bg-[#1A2330] text-left text-xs font-medium uppercase tracking-wide text-[#8899AA]">
+          <th class="px-4 py-3">Code</th>
+          <th class="px-4 py-3">Customer</th>
+          <th class="px-4 py-3">Status</th>
+          <th class="px-4 py-3">Payment</th>
+          <th class="px-4 py-3 text-right">Total</th>
+          <th class="px-4 py-3">Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        {orders.length === 0 && (
+          <tr>
+            <td colspan="6" class="px-4 py-10 text-center text-[#8899AA]">No orders found.</td>
+          </tr>
+        )}
+        {orders.map((o) => (
+          <tr class="border-b border-[#2A3340] bg-[#151E2B] last:border-0 hover:bg-[#1A2330]">
+            <td class="px-4 py-3 font-mono font-semibold text-[#E8ECF0]">{o.code}</td>
+            <td class="px-4 py-3 text-[#B0BCC8]">{o.profile?.full_name ?? '—'}</td>
+            <td class="px-4 py-3">
+              {o.status === 'returned' ? (
+                <span class="rounded-full bg-orange-900/40 px-2 py-0.5 text-xs font-medium capitalize text-orange-300">
+                  {o.status}
+                </span>
+              ) : (
+                <span class="rounded-full bg-green-900/40 px-2 py-0.5 text-xs font-medium capitalize text-green-400">
+                  {o.status}
+                </span>
+              )}
+            </td>
+            <td class="px-4 py-3 capitalize text-[#B0BCC8]">{o.payment_method}</td>
+            <td class="px-4 py-3 text-right font-mono text-[#E8ECF0]">{formatINR(o.total)}</td>
+            <td class="px-4 py-3 text-[#8899AA]">{fmtDate(o.created_at)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+
+  {totalPages > 1 && (
+    <div class="mt-5 flex items-center justify-center gap-4 text-sm">
+      {page > 1 ? (
+        <a
+          href={`/ops/delivered?page=${page - 1}`}
+          class="rounded border border-[#2A3340] bg-[#1A2330] px-4 py-2 text-[#E8ECF0] hover:bg-[#2A3340]"
+        >
+          Prev
+        </a>
+      ) : (
+        <span class="rounded border border-[#2A3340] bg-[#151E2B] px-4 py-2 text-[#4A5568]">Prev</span>
+      )}
+
+      <span class="text-[#8899AA]">
+        Page {page} of {totalPages}
+      </span>
+
+      {page < totalPages ? (
+        <a
+          href={`/ops/delivered?page=${page + 1}`}
+          class="rounded border border-[#2A3340] bg-[#1A2330] px-4 py-2 text-[#E8ECF0] hover:bg-[#2A3340]"
+        >
+          Next
+        </a>
+      ) : (
+        <span class="rounded border border-[#2A3340] bg-[#151E2B] px-4 py-2 text-[#4A5568]">Next</span>
+      )}
+    </div>
+  )}
+</OpsLayout>

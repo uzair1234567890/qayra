@@ -1,0 +1,7 @@
+dist/
+.astro/
+node_modules/
+supabase/migrations/
+src/lib/supabase/types.ts
+package-lock.json
+docs/superpowers/plans/

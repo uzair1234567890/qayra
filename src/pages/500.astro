@@ -1,0 +1,13 @@
+---
+import PublicLayout from '../layouts/PublicLayout.astro';
+import Button from '../components/ui/Button.astro';
+---
+
+<PublicLayout title="Something broke">
+  <section class="mx-auto max-w-md px-4 py-24 text-center sm:px-6">
+    <p class="font-display text-aubergine mb-4 text-8xl">500</p>
+    <p class="font-display mb-2 text-2xl">Something on our side broke.</p>
+    <p class="text-navy/70 mb-8">Try again in a moment — and please tell us if it persists.</p>
+    <Button variant="primary" href="/">Back home</Button>
+  </section>
+</PublicLayout>

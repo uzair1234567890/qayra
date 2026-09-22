@@ -1,0 +1,15 @@
+---
+interface Props { columns: string[]; }
+const { columns } = Astro.props;
+---
+
+<div class="rounded border border-[#EAEAEA] bg-white">
+  <table class="w-full text-sm">
+    <thead>
+      <tr class="border-b border-[#EAEAEA] text-left text-[10px] tracking-widest text-[#888] uppercase">
+        {columns.map((c) => <th class="px-3 py-2">{c}</th>)}
+      </tr>
+    </thead>
+    <tbody><slot /></tbody>
+  </table>
+</div>

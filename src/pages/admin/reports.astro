@@ -1,0 +1,127 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { requireRole } from '../../lib/auth/session';
+import { revenueByDay, topScents, codVsPrepaidSplit } from '../../lib/admin/reports';
+import { formatINR } from '../../lib/format';
+
+const result = await requireRole(Astro as any, 'admin');
+if (result instanceof Response) return result;
+
+const VALID_RANGES = [7, 30, 90] as const;
+const _r = parseInt(Astro.url.searchParams.get('range') ?? '30', 10);
+const range = (VALID_RANGES as readonly number[]).includes(_r as 7 | 30 | 90) ? (_r as 7 | 30 | 90) : 30;
+
+const [revenue, scents, split] = await Promise.all([
+  revenueByDay(range),
+  topScents(range),
+  codVsPrepaidSplit(range),
+]);
+
+const maxRevenue = revenue.reduce((m, r) => Math.max(m, r.total), 0);
+---
+
+<AdminLayout title="Reports">
+  <div class="mb-6 flex gap-2">
+    {([7, 30, 90] as const).map((n) => (
+      <a
+        href={`?range=${n}`}
+        class:list={[
+          'px-3 py-1.5 text-sm rounded border',
+          range === n
+            ? 'bg-[#1A1A1A] text-white border-[#1A1A1A]'
+            : 'border-[#DDDDD8]',
+        ]}
+      >{n} days</a>
+    ))}
+  </div>
+
+  <div class="mb-8">
+    <h3 class="mb-3 text-sm font-semibold">Revenue by day</h3>
+    <div class="rounded border border-[#EAEAEA] bg-white p-4">
+      {revenue.length === 0 ? (
+        <p class="text-sm text-[#888]">No revenue data for this period.</p>
+      ) : (
+        <div class="space-y-2">
+          {revenue.map((r) => (
+            <div class="flex items-center gap-3 text-xs">
+              <span class="w-12 shrink-0 font-mono text-[#666]">{r.day.slice(5)}</span>
+              <div class="flex-1">
+                <div
+                  class="h-5 rounded bg-[#1A1A1A]"
+                  style={`width: ${maxRevenue > 0 ? ((r.total / maxRevenue) * 100).toFixed(1) : 0}%`}
+                />
+              </div>
+              <span class="w-24 shrink-0 text-right font-mono">{formatINR(r.total)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+
+  <div class="mb-8">
+    <h3 class="mb-3 text-sm font-semibold">Top scents</h3>
+    <div class="rounded border border-[#EAEAEA] bg-white p-4">
+      {scents.length === 0 ? (
+        <p class="text-sm text-[#888]">No order items for this period.</p>
+      ) : (
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="text-[10px] tracking-widest text-[#888] uppercase">
+              <th class="py-1 text-left">Rank</th>
+              <th class="text-left">Scent</th>
+              <th class="text-right">Units sold</th>
+              <th class="text-right">Revenue</th>
+            </tr>
+          </thead>
+          <tbody>
+            {scents.map((s, i) => (
+              <tr class="border-t border-[#F4F4F4]">
+                <td class="py-2 font-mono text-xs text-[#888]">#{i + 1}</td>
+                <td class="py-2">{s.name}</td>
+                <td class="py-2 text-right font-mono text-xs">{s.qty}</td>
+                <td class="py-2 text-right font-mono text-xs">{formatINR(s.revenue)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  </div>
+
+  <div class="mb-8">
+    <h3 class="mb-3 text-sm font-semibold">COD vs Prepaid</h3>
+    <div class="rounded border border-[#EAEAEA] bg-white p-4">
+      {split.total === 0 ? (
+        <p class="text-sm text-[#888]">No paid orders for this period.</p>
+      ) : (
+        <div class="space-y-3">
+          <div>
+            <div class="mb-1 flex justify-between text-xs">
+              <span>COD</span>
+              <span class="font-mono">{split.cod} orders ({((split.cod / split.total) * 100).toFixed(0)}%)</span>
+            </div>
+            <div class="h-4 w-full overflow-hidden rounded bg-[#F4F4F4]">
+              <div
+                class="h-full rounded bg-[#1A1A1A]"
+                style={`width: ${((split.cod / split.total) * 100).toFixed(1)}%`}
+              />
+            </div>
+          </div>
+          <div>
+            <div class="mb-1 flex justify-between text-xs">
+              <span>Prepaid</span>
+              <span class="font-mono">{split.prepaid} orders ({((split.prepaid / split.total) * 100).toFixed(0)}%)</span>
+            </div>
+            <div class="h-4 w-full overflow-hidden rounded bg-[#F4F4F4]">
+              <div
+                class="h-full rounded bg-[#555]"
+                style={`width: ${((split.prepaid / split.total) * 100).toFixed(1)}%`}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  </div>
+</AdminLayout>

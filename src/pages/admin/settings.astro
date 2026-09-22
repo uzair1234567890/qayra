@@ -1,0 +1,116 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { requireRole } from '../../lib/auth/session';
+import { getSettings } from '../../lib/admin/settings';
+
+const result = await requireRole(Astro as any, 'admin');
+if (result instanceof Response) return result;
+
+const settings = await getSettings();
+
+const info = Astro.url.searchParams.get('info');
+const error = Astro.url.searchParams.get('error');
+---
+
+<AdminLayout title="Settings">
+  {info && (
+    <div class="mb-4 rounded border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+      {info}
+    </div>
+  )}
+  {error && (
+    <div class="mb-4 rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+      {error}
+    </div>
+  )}
+
+  <form action="/api/admin/settings-update" method="post">
+    <div class="mb-6 rounded border border-[#EAEAEA] bg-white p-4">
+      <h2 class="mb-3 text-sm font-medium">Store info</h2>
+      <div class="mb-3">
+        <label class="mb-1 block text-xs text-[#666]" for="store_name">Store name</label>
+        <input
+          id="store_name"
+          type="text"
+          name="store_name"
+          value={settings.store_name}
+          required
+          class="w-full rounded border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#1A1A1A] focus:outline-none"
+        />
+      </div>
+      <div>
+        <label class="mb-1 block text-xs text-[#666]" for="support_email">Support email</label>
+        <input
+          id="support_email"
+          type="email"
+          name="support_email"
+          value={settings.support_email}
+          required
+          class="w-full rounded border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#1A1A1A] focus:outline-none"
+        />
+      </div>
+    </div>
+
+    <div class="mb-6 rounded border border-[#EAEAEA] bg-white p-4">
+      <h2 class="mb-3 text-sm font-medium">Shipping</h2>
+      <div class="mb-3">
+        <label class="mb-1 block text-xs text-[#666]" for="shipping_flat">Flat rate (₹)</label>
+        <input
+          id="shipping_flat"
+          type="number"
+          name="shipping_flat"
+          value={settings.shipping_flat_paise / 100}
+          step="1"
+          min="0"
+          placeholder="₹ flat rate"
+          class="w-full rounded border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#1A1A1A] focus:outline-none"
+        />
+      </div>
+      <div>
+        <label class="mb-1 block text-xs text-[#666]" for="shipping_free_threshold">Free shipping threshold (₹)</label>
+        <input
+          id="shipping_free_threshold"
+          type="number"
+          name="shipping_free_threshold"
+          value={settings.shipping_free_threshold_paise / 100}
+          step="1"
+          min="0"
+          class="w-full rounded border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#1A1A1A] focus:outline-none"
+        />
+      </div>
+    </div>
+
+    <div class="mb-6 rounded border border-[#EAEAEA] bg-white p-4">
+      <h2 class="mb-3 text-sm font-medium">Cash on delivery</h2>
+      <div class="mb-3 flex items-center gap-2">
+        <input
+          id="cod_enabled"
+          type="checkbox"
+          name="cod_enabled"
+          checked={settings.cod_enabled}
+          class="h-4 w-4 rounded border-[#EAEAEA]"
+        />
+        <label class="text-sm" for="cod_enabled">Enabled</label>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs text-[#666]" for="cod_surcharge">Surcharge (₹)</label>
+        <input
+          id="cod_surcharge"
+          type="number"
+          name="cod_surcharge"
+          value={settings.cod_surcharge_paise / 100}
+          step="1"
+          min="0"
+          class="w-full rounded border border-[#EAEAEA] px-3 py-2 text-sm focus:border-[#1A1A1A] focus:outline-none"
+        />
+      </div>
+    </div>
+
+    <button
+      type="submit"
+      class="rounded bg-[#1A1A1A] px-5 py-2 text-sm font-medium text-white hover:bg-[#333]"
+    >
+      Save settings
+    </button>
+  </form>
+</AdminLayout>

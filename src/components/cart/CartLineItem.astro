@@ -1,0 +1,27 @@
+---
+import { formatINR } from '../../lib/format';
+import type { CartLine } from '../../lib/cart';
+import LowStockBadge from '../product/LowStockBadge.astro';
+interface Props { line: CartLine; }
+const { line } = Astro.props;
+---
+<div class="border-navy/10 flex gap-3 border-b py-4" data-line-id={line.id}>
+  <div class="bg-aubergine/20 h-20 w-20 flex-shrink-0">
+    {line.image_url
+      ? <img src={line.image_url} alt={line.name} class="h-full w-full object-cover" />
+      : <div class="from-aubergine to-navy h-full w-full bg-gradient-to-br" />
+    }
+  </div>
+  <div class="min-w-0 flex-1">
+    <p class="font-display text-base">{line.name}</p>
+    <p class="text-navy/60 text-xs">{formatINR(line.price)}</p>
+    <LowStockBadge stockQty={line.stock_qty} />
+    <div class="mt-2 flex items-center gap-2 text-xs">
+      <button data-qty-dec data-loading class="border-navy/30 h-7 w-7 border" aria-label={`Decrease quantity of ${line.name}`}>−</button>
+      <span data-qty class="min-w-[1.5rem] text-center" aria-label={`Quantity of ${line.name}`}>{line.quantity}</span>
+      <button data-qty-inc data-loading class="border-navy/30 h-7 w-7 border" aria-label={`Increase quantity of ${line.name}`}>+</button>
+      <button data-remove data-loading class="text-navy/60 hover:text-navy ml-3 underline" aria-label={`Remove ${line.name} from cart`}>Remove</button>
+    </div>
+  </div>
+  <p class="font-medium" data-line-total>{formatINR(line.price * line.quantity)}</p>
+</div>

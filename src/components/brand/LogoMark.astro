@@ -1,0 +1,11 @@
+---
+import ScentCurl from './ScentCurl.astro';
+interface Props {
+  class?: string;
+  size?: number;
+  animated?: boolean;
+}
+const { class: className = '', size = 32, animated = false } = Astro.props;
+---
+
+<ScentCurl size={size} stroke="currentColor" class={className} animated={animated} />

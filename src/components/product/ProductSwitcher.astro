@@ -1,0 +1,22 @@
+---
+import type { Scent } from '../../lib/catalog';
+import Pill from '../ui/Pill.astro';
+interface Props {
+  scents: Scent[];
+  activeSlug: string;
+}
+const { scents, activeSlug } = Astro.props;
+---
+
+<div>
+  <p class="text-navy/60 mb-2 text-xs tracking-[0.2em] uppercase">Other products</p>
+  <div class="flex flex-wrap gap-2">
+    {
+      scents.map((s) => (
+        <a href={`/product/${s.slug}`}>
+          <Pill active={s.slug === activeSlug}>{s.name}</Pill>
+        </a>
+      ))
+    }
+  </div>
+</div>

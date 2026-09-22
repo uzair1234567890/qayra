@@ -1,0 +1,33 @@
+---
+import '../styles/globals.css';
+import AdminSidebar from '../components/admin/AdminSidebar.astro';
+import AdminTopbar from '../components/admin/AdminTopbar.astro';
+interface Props { title: string; }
+const { title } = Astro.props;
+const session = Astro.locals.session;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title} · admin · qayra</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="font-ui flex min-h-screen bg-[#FAFAF8] text-[#1A1A1A]">
+    <AdminSidebar />
+    <div class="flex min-h-screen flex-1 flex-col">
+      <AdminTopbar title={title} userEmail={session?.email ?? ''} />
+      <main class="mx-auto w-full max-w-7xl flex-1 px-6 py-6"><slot /></main>
+    </div>
+    <script src="../scripts/button-loading.client.ts"></script>
+    <script src="../scripts/image-upload-field.client.ts"></script>
+  </body>
+</html>

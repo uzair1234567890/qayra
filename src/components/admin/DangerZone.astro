@@ -1,0 +1,8 @@
+---
+interface Props { title?: string; }
+const { title = 'Danger zone' } = Astro.props;
+---
+<div class="rounded border border-[#FFDAD8] bg-[#FFF5F5] p-4">
+  <p class="mb-3 text-[11px] font-semibold tracking-widest text-[#C44] uppercase">{title}</p>
+  <slot />
+</div>

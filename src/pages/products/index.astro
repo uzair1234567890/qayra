@@ -1,0 +1,28 @@
+---
+import PublicLayout from '../../layouts/PublicLayout.astro';
+import ProductCard from '../../components/product/ProductCard.astro';
+import { getActiveScents } from '../../lib/catalog';
+import { buildScentListLd } from '../../lib/seo/jsonld';
+
+const scents = await getActiveScents(Astro.request, Astro.cookies);
+const siteUrl = Astro.site?.toString().replace(/\/$/, '') ?? 'https://qayra.in';
+const listLd = buildScentListLd(scents, siteUrl);
+---
+
+<PublicLayout title="All products">
+  <script
+    type="application/ld+json"
+    set:html={JSON.stringify(listLd)}
+    is:inline
+  />
+  <section class="mx-auto max-w-6xl px-4 py-12 sm:px-6 md:py-20">
+    <p class="text-navy/60 mb-3 text-xs tracking-[0.3em] uppercase">qayra</p>
+    <h1 class="font-display mb-4 text-4xl font-light md:text-5xl">The collection</h1>
+    <p class="text-navy/70 mb-12 max-w-md">
+      Hand-blended in small batches in Bengaluru. Each composed for a moment.
+    </p>
+    <div class="grid grid-cols-2 gap-6 md:grid-cols-4 md:gap-8">
+      {scents.map((s) => <ProductCard scent={s} />)}
+    </div>
+  </section>
+</PublicLayout>

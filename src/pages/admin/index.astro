@@ -1,0 +1,85 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import KPICard from '../../components/admin/KPICard.astro';
+import StatusPill from '../../components/admin/StatusPill.astro';
+import { requireRole } from '../../lib/auth/session';
+import { getKpis, recentOrders, lowStock } from '../../lib/admin/dashboard';
+import { formatINR } from '../../lib/format';
+
+const result = await requireRole(Astro as any, 'admin');
+if (result instanceof Response) return result;
+
+const VALID_RANGES = [1, 7, 30, 90] as const;
+const _r = parseInt(Astro.url.searchParams.get('range') ?? '1', 10);
+const range = (VALID_RANGES as readonly number[]).includes(_r) ? _r : 1;
+const [k, recent, stock] = await Promise.all([getKpis(range), recentOrders(5), lowStock(20)]);
+---
+
+<AdminLayout title="Dashboard">
+  <!-- range tabs: Today/7 days/30 days/90 days, highlight active -->
+  <div class="mb-6 flex gap-2 text-xs">
+    {([['Today', 1], ['7 days', 7], ['30 days', 30], ['90 days', 90]] as [string, number][]).map(([label, n]) => (
+      <a
+        href={`?range=${n}`}
+        class:list={[
+          'border-b-2 px-3 py-1',
+          range === n ? 'border-[#1A1A1A] font-medium' : 'border-transparent text-[#666]',
+        ]}
+      >{label}</a>
+    ))}
+  </div>
+
+  <!-- KPI grid -->
+  <div class="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
+    <KPICard label="Revenue" value={formatINR(k.revenue)} />
+    <KPICard label="Orders" value={String(k.count)} />
+    <KPICard label="AOV" value={formatINR(k.aov)} />
+    <KPICard label="Low stock items" value={String(stock.length)} />
+  </div>
+
+  <!-- Two-column panels -->
+  <div class="grid gap-4 md:grid-cols-2">
+    <!-- Recent orders -->
+    <div class="rounded border border-[#EAEAEA] bg-white p-4">
+      <div class="mb-3 flex items-center justify-between">
+        <h3 class="text-sm font-semibold">Latest orders</h3>
+        <a href="/admin/orders" class="text-xs text-[#0066CC]">View all →</a>
+      </div>
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-[10px] tracking-widest text-[#888] uppercase">
+            <th class="py-1 text-left">Order</th>
+            <th class="text-left">Customer</th>
+            <th class="text-left">Status</th>
+            <th class="text-right">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {recent.map((o) => (
+            <tr class="border-t border-[#F4F4F4]">
+              <td class="py-2 font-mono text-xs">{o.code}</td>
+              <td class="text-xs">{(o.profile as any)?.full_name ?? '—'}</td>
+              <td><StatusPill value={o.status} /></td>
+              <td class="text-right font-mono text-xs">{formatINR(o.total)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Low stock -->
+    <div class="rounded border border-[#EAEAEA] bg-white p-4">
+      <h3 class="mb-3 text-sm font-semibold">Low stock (&lt; 20)</h3>
+      {stock.length === 0 ? (
+        <p class="text-sm text-[#888]">All scents healthy.</p>
+      ) : (
+        stock.map((s) => (
+          <div class="flex justify-between border-t border-[#F4F4F4] py-1.5 text-sm first:border-0">
+            <span>{s.name}</span>
+            <span class="font-mono text-[#C44]">{s.stock_qty} left</span>
+          </div>
+        ))
+      )}
+    </div>
+  </div>
+</AdminLayout>

@@ -1,0 +1,95 @@
+---
+interface Props {
+  address?: {
+    id?: string;
+    name: string;
+    line1: string;
+    line2: string | null;
+    city: string;
+    state: string;
+    pincode: string;
+    phone: string;
+  };
+  action: string;
+}
+const { address, action } = Astro.props;
+const a = address;
+---
+
+<form method="post" action={action} class="max-w-md space-y-3">
+  {a?.id && <input type="hidden" name="id" value={a.id} />}
+  <label class="block">
+    <span class="sr-only">Full name</span>
+    <input
+      name="name"
+      required
+      placeholder="Full name"
+      value={a?.name ?? ''}
+      class="border-navy/20 w-full border px-3 py-2"
+    />
+  </label>
+  <label class="block">
+    <span class="sr-only">Address line 1</span>
+    <input
+      name="line1"
+      required
+      placeholder="Address line 1"
+      value={a?.line1 ?? ''}
+      class="border-navy/20 w-full border px-3 py-2"
+    />
+  </label>
+  <label class="block">
+    <span class="sr-only">Address line 2 (optional)</span>
+    <input
+      name="line2"
+      placeholder="Address line 2"
+      value={a?.line2 ?? ''}
+      class="border-navy/20 w-full border px-3 py-2"
+    />
+  </label>
+  <div class="grid grid-cols-3 gap-3">
+    <label class="block">
+      <span class="sr-only">City</span>
+      <input
+        name="city"
+        required
+        placeholder="City"
+        value={a?.city ?? ''}
+        class="border-navy/20 w-full border px-3 py-2"
+      />
+    </label>
+    <label class="block">
+      <span class="sr-only">State</span>
+      <input
+        name="state"
+        required
+        placeholder="State"
+        value={a?.state ?? ''}
+        class="border-navy/20 w-full border px-3 py-2"
+      />
+    </label>
+    <label class="block">
+      <span class="sr-only">PIN code</span>
+      <input
+        name="pincode"
+        required
+        pattern="[0-9]{6}"
+        placeholder="PIN"
+        value={a?.pincode ?? ''}
+        class="border-navy/20 w-full border px-3 py-2"
+      />
+    </label>
+  </div>
+  <label class="block">
+    <span class="sr-only">Phone (10 digits)</span>
+    <input
+      name="phone"
+      required
+      pattern="[6-9][0-9]{9}"
+      placeholder="Phone (10 digits)"
+      value={a?.phone ?? ''}
+      class="border-navy/20 w-full border px-3 py-2"
+    />
+  </label>
+  <button class="bg-navy text-cream px-6 py-3 text-xs tracking-widest uppercase">Save</button>
+</form>

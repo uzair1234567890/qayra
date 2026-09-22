@@ -1,0 +1,48 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { requireRole } from '../../../lib/auth/session';
+
+const result = await requireRole(Astro as any, 'admin');
+if (result instanceof Response) return result;
+const error = Astro.url.searchParams.get('error');
+---
+
+<AdminLayout title="New banner">
+  {error && <p class="mb-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-[#C44]">{error}</p>}
+  <form action="/api/admin/banner-create" method="post" class="max-w-md space-y-4">
+    <div>
+      <label class="mb-1 block text-xs font-medium text-[#444]">Position</label>
+      <select name="position" class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm">
+        <option value="announcement">Announcement</option>
+        <option value="hero">Hero</option>
+      </select>
+    </div>
+    <div>
+      <label class="mb-1 block text-xs font-medium text-[#444]">Image URL (optional)</label>
+      <input name="image_url" type="url" class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm" placeholder="https://..." />
+    </div>
+    <div>
+      <label class="mb-1 block text-xs font-medium text-[#444]">Headline (optional)</label>
+      <input name="headline" type="text" maxlength="200" class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm" />
+    </div>
+    <div>
+      <label class="mb-1 block text-xs font-medium text-[#444]">CTA text (optional)</label>
+      <input name="cta_text" type="text" maxlength="80" class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm" />
+    </div>
+    <div>
+      <label class="mb-1 block text-xs font-medium text-[#444]">CTA URL (optional)</label>
+      <input name="cta_url" type="url" class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm" placeholder="https://..." />
+    </div>
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="mb-1 block text-xs font-medium text-[#444]">Active from</label>
+        <input name="active_from" type="datetime-local" class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm" />
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-[#444]">Active until</label>
+        <input name="active_until" type="datetime-local" class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm" />
+      </div>
+    </div>
+    <button type="submit" class="rounded bg-[#1A1A1A] px-5 py-2 text-sm text-white">Create banner</button>
+  </form>
+</AdminLayout>

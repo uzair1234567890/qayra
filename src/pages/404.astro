@@ -1,0 +1,14 @@
+---
+import PublicLayout from '../layouts/PublicLayout.astro';
+import Button from '../components/ui/Button.astro';
+Astro.response.status = 404;
+---
+
+<PublicLayout title="Not found">
+  <section class="mx-auto max-w-md px-4 py-24 text-center sm:px-6">
+    <p class="font-display text-aubergine mb-4 text-8xl">404</p>
+    <p class="font-display mb-2 text-2xl">This page doesn't exist.</p>
+    <p class="text-navy/70 mb-8">The page you're looking for isn't here.</p>
+    <Button variant="primary" href="/products">Browse products</Button>
+  </section>
+</PublicLayout>

@@ -1,0 +1,16 @@
+---
+interface Props {
+  title: string;
+  count: number;
+  highlight?: boolean;
+}
+const { title, count, highlight = false } = Astro.props;
+---
+
+<div class={`flex flex-col gap-2 rounded border p-3 ${highlight ? 'border-[#F5EDD8]/30 bg-[#2A2010]' : 'border-[#2A3340] bg-[#1A2330]'}`}>
+  <div class="flex items-center justify-between mb-2">
+    <h2 class="text-xs font-semibold uppercase tracking-widest text-[#E8ECF0]/60">{title}</h2>
+    <span class={`rounded-full px-2 py-0.5 text-xs font-bold ${highlight ? 'bg-[#F5EDD8] text-[#0F1620]' : 'bg-[#2A3340] text-[#E8ECF0]'}`}>{count}</span>
+  </div>
+  <slot />
+</div>

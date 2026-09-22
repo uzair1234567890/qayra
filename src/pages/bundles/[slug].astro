@@ -1,0 +1,122 @@
+---
+import PublicLayout from '../../layouts/PublicLayout.astro';
+import ProductJsonLd from '../../components/seo/ProductJsonLd.astro';
+import BreadcrumbJsonLd from '../../components/seo/BreadcrumbJsonLd.astro';
+import { serverClient } from '../../lib/supabase/server';
+import { formatINR } from '../../lib/format';
+import { bundleSavings, itemwiseTotal } from '../../lib/bundle-pricing';
+import ImageSlideshow from '../../components/product/ImageSlideshow.astro';
+
+const { slug } = Astro.params;
+
+if (!slug || slug.length > 80 || !/^[a-z0-9-]+$/.test(slug)) {
+  return Astro.rewrite('/404');
+}
+
+const supabase = serverClient(Astro.request, Astro.cookies);
+const { data: bundle } = await supabase
+  .from('bundles')
+  .select('id, slug, name, description, price, image_urls, bundle_items(quantity, scent:scents(slug, name, image_urls, product:products(base_price)))')
+  .eq('slug', slug)
+  .eq('status', 'active')
+  .maybeSingle();
+
+if (!bundle) return Astro.rewrite('/404');
+
+const items = ((bundle.bundle_items as any[]) ?? []).map((bi: any) => ({
+  slug: bi.scent?.slug ?? '',
+  name: bi.scent?.name ?? '',
+  image: bi.scent?.image_urls?.[0] ?? null,
+  price: bi.scent?.product?.base_price ?? 0,
+  quantity: bi.quantity ?? 1,
+})).filter(i => i.name);
+
+const fullPrice = itemwiseTotal(items);
+const savings = bundleSavings(bundle.price, items);
+---
+
+<PublicLayout title={bundle.name} description={bundle.description ?? undefined}>
+  <ProductJsonLd bundle={bundle} />
+  <BreadcrumbJsonLd
+    crumbs={[
+      { name: 'Home', url: `${Astro.site}` },
+      { name: 'Bundles', url: `${Astro.site}bundles` },
+      { name: bundle.name, url: `${Astro.site}bundles/${bundle.slug}` },
+    ]}
+  />
+  <section class="mx-auto grid max-w-4xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-2 md:py-20">
+    <ImageSlideshow images={bundle.image_urls ?? []} name={bundle.name} />
+
+    <div>
+      <p class="text-aubergine mb-2 text-xs tracking-[0.3em] uppercase">Bundle</p>
+      <h1 class="font-display mb-3 text-4xl font-light">{bundle.name}</h1>
+
+      <div class="mb-4 flex flex-wrap items-baseline gap-3">
+        <span class="text-2xl font-medium">{formatINR(bundle.price)}</span>
+        {savings > 0 && <span class="text-navy/40 text-base line-through">{formatINR(fullPrice)}</span>}
+        {savings > 0 && (
+          <span class="bg-champagne text-near-black text-xs font-semibold uppercase tracking-widest px-2 py-0.5">
+            Save {formatINR(savings)}
+          </span>
+        )}
+      </div>
+
+      {bundle.description && <p class="text-navy/80 mb-6">{bundle.description}</p>}
+
+      <p class="text-navy/60 mb-2 text-xs uppercase tracking-widest">Includes</p>
+      <ul class="mb-8 space-y-2 text-sm">
+        {items.map((it) => (
+          <li class="flex items-center gap-3">
+            <div class="bg-aubergine/20 h-10 w-10 flex-shrink-0 overflow-hidden">
+              {it.image && <img src={it.image} alt="" class="h-full w-full object-cover" />}
+            </div>
+            <span class="text-navy/80 flex-1">{it.name} × {it.quantity}</span>
+            <span class="text-navy/40 text-xs">{formatINR(it.price)}</span>
+          </li>
+        ))}
+      </ul>
+
+      <button
+        type="button"
+        data-add-bundle
+        data-bundle-id={bundle.id}
+        class="bg-navy text-cream w-full px-6 py-3 text-xs uppercase tracking-widest md:w-auto"
+      >
+        Add bundle to cart
+      </button>
+    </div>
+  </section>
+</PublicLayout>
+
+<script>
+  const btn = document.querySelector('[data-add-bundle]') as HTMLButtonElement | null;
+  btn?.addEventListener('click', async () => {
+    const id = btn.dataset.bundleId;
+    if (!id) return;
+    btn.disabled = true;
+    btn.textContent = 'Adding…';
+    try {
+      const r = await fetch('/api/cart/add', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ bundle_id: id, quantity: 1 }),
+      });
+      if (r.ok) {
+        const { bagCount } = await r.json();
+        btn.textContent = 'Added ✓';
+        const counter = document.querySelector('[data-bag-count]');
+        if (counter && bagCount != null) counter.textContent = String(bagCount);
+        setTimeout(() => {
+          btn.textContent = 'Add bundle to cart';
+          btn.disabled = false;
+        }, 1500);
+      } else {
+        btn.textContent = 'Try again';
+        btn.disabled = false;
+      }
+    } catch {
+      btn.textContent = 'Try again';
+      btn.disabled = false;
+    }
+  });
+</script>

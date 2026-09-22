@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1a0e1f"/>
+      <stop offset="50%" stop-color="#3a1f47"/>
+      <stop offset="100%" stop-color="#5a2e6b"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#g)"/>
+  <text x="600" y="320" text-anchor="middle" font-family="Georgia, serif" font-size="120" font-weight="300" fill="#f4e4c1" letter-spacing="8">qayra</text>
+  <text x="600" y="400" text-anchor="middle" font-family="system-ui, sans-serif" font-size="28" fill="#f4e4c1" letter-spacing="6" opacity="0.7">HAND-BLENDED · MADE SLOWLY IN INDIA</text>
+</svg>

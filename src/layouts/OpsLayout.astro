@@ -1,0 +1,27 @@
+---
+import '../styles/globals.css';
+import OpsTopbar from '../components/ops/OpsTopbar.astro';
+interface Props {
+  title: string;
+}
+const { title } = Astro.props;
+const session = Astro.locals.session;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title} · ops · qayra</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="font-ui min-h-screen bg-[#0F1620] text-[#E8ECF0]">
+    <OpsTopbar title={title} userEmail={session?.email ?? ''} />
+    <main class="mx-auto max-w-7xl px-4 py-4"><slot /></main>
+    <script src="../scripts/button-loading.client.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,55 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import DataTable from '../../../components/admin/DataTable.astro';
+import EmptyState from '../../../components/admin/EmptyState.astro';
+import { requireRole } from '../../../lib/auth/session';
+import { listOffers } from '../../../lib/admin/offers';
+import { formatINR } from '../../../lib/format';
+
+const result = await requireRole(Astro as any, 'admin');
+if (result instanceof Response) return result;
+const offers = await listOffers();
+const error = Astro.url.searchParams.get('error');
+
+function displayRule(rule_json: unknown): { kind: string; detail: string } {
+  const rule = rule_json as Record<string, unknown>;
+  if (rule?.kind === 'free_shipping') {
+    const minSubtotal = typeof rule.min_subtotal === 'number' ? rule.min_subtotal : 0;
+    return { kind: 'Free shipping', detail: `Free shipping ≥ ${formatINR(minSubtotal)}` };
+  }
+  if (rule?.kind === 'buy_x_get_y_pct') {
+    const minQty = typeof rule.min_qty === 'number' ? rule.min_qty : 0;
+    const pctOff = typeof rule.pct_off_extra === 'number' ? rule.pct_off_extra : 0;
+    return { kind: 'Buy X get Y%', detail: `Buy ≥${minQty} get ${pctOff}% off extra` };
+  }
+  return { kind: 'Unknown', detail: '—' };
+}
+---
+
+<AdminLayout title="Auto-offers">
+  {error && <p class="mb-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-[#C44]">{error}</p>}
+  <div class="mb-4 flex items-center justify-between">
+    <h2 class="text-sm text-[#666]">{offers.length} auto-offer{offers.length !== 1 ? 's' : ''}</h2>
+    <a href="/admin/offers/new" class="rounded bg-[#1A1A1A] px-4 py-2 text-xs text-white">+ New offer</a>
+  </div>
+  {offers.length === 0 ? (
+    <EmptyState message="No auto-offers yet." />
+  ) : (
+    <DataTable columns={['Name', 'Kind', 'Details', 'Active', '']}>
+      {offers.map((o) => {
+        const { kind, detail } = displayRule(o.rule_json);
+        return (
+          <tr class="border-t border-[#F4F4F4] hover:bg-[#FAFAF8]">
+            <td class="px-3 py-2 text-xs font-medium">{o.name}</td>
+            <td class="px-3 py-2 text-xs">{kind}</td>
+            <td class="px-3 py-2 text-xs text-[#666]">{detail}</td>
+            <td class="px-3 py-2 text-xs">{o.active ? 'Yes' : 'No'}</td>
+            <td class="px-3 py-2 text-right text-xs">
+              <a href={`/admin/offers/${o.id}`} class="text-[#0066CC]">Edit</a>
+            </td>
+          </tr>
+        );
+      })}
+    </DataTable>
+  )}
+</AdminLayout>

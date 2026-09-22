@@ -1,0 +1,66 @@
+---
+import { serverClient } from '../../lib/supabase/server';
+import HeroStagger from '../motion/HeroStagger.astro';
+
+const supabase = serverClient(Astro.request, Astro.cookies);
+const now = new Date().toISOString();
+
+const { data: banner } = await supabase
+  .from('banners')
+  .select('headline, image_url, cta_text, cta_url')
+  .eq('position', 'hero')
+  .or(`active_from.is.null,active_from.lte.${now}`)
+  .or(`active_until.is.null,active_until.gte.${now}`)
+  .order('created_at', { ascending: false })
+  .limit(1)
+  .maybeSingle();
+---
+
+{banner ? (
+  <section class="relative bg-navy text-cream overflow-hidden">
+    {banner.image_url && (
+      <img
+        src={banner.image_url}
+        alt=""
+        width="1920"
+        height="600"
+        fetchpriority="high"
+        class="absolute inset-0 h-full w-full object-cover opacity-30"
+      />
+    )}
+    <div class="relative mx-auto max-w-3xl px-4 py-24 sm:px-6 text-center">
+      <HeroStagger>
+        {banner.headline && <h1 class="font-display text-5xl md:text-7xl font-light mb-4">{banner.headline}</h1>}
+        {banner.cta_text && banner.cta_url && (
+          <a href={banner.cta_url} class="inline-block bg-champagne text-navy px-8 py-3 text-xs uppercase tracking-widest">
+            {banner.cta_text}
+          </a>
+        )}
+      </HeroStagger>
+    </div>
+  </section>
+) : (
+  <section class="bg-near-black text-cream">
+    <div class="mx-auto grid max-w-6xl items-center gap-10 px-4 py-16 sm:px-6 md:grid-cols-2 md:py-24">
+      <HeroStagger>
+        <p class="text-champagne mb-4 text-xs tracking-[0.3em] uppercase">
+          Vol. 1 — the collection
+        </p>
+        <h1 class="font-display mb-4 text-5xl leading-tight font-light md:text-6xl">
+          Quiet luxury.<br />Long drives.
+        </h1>
+        <div>
+          <p class="text-cream/70 mb-8 max-w-md">
+            Hand-blended fragrances for the inside of your car. Made in small batches in
+            Bengaluru.
+          </p>
+          <a href="/products" class="inline-block bg-champagne text-navy px-8 py-3 text-xs uppercase tracking-widest">
+            Shop the collection
+          </a>
+        </div>
+      </HeroStagger>
+      <div class="from-aubergine via-navy to-near-black aspect-square rounded-sm bg-gradient-to-br">
+      </div>
+    </div>
+  </section>
+)}

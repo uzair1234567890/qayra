@@ -1,0 +1,175 @@
+---
+interface Props {
+  images: string[];
+  name: string;
+}
+const { images, name } = Astro.props;
+const count = images.length;
+---
+
+{count === 0 && (
+  <div class="from-aubergine via-navy to-near-black aspect-square w-full bg-gradient-to-br"></div>
+)}
+
+{count === 1 && (
+  <div class="aspect-square w-full overflow-hidden bg-black">
+    <img src={images[0]} alt={`${name} photo`} class="h-full w-full object-cover" loading="eager" />
+  </div>
+)}
+
+{count > 1 && (
+  <section
+    class="image-slideshow"
+    role="region"
+    aria-roledescription="carousel"
+    aria-label={`${name} photos`}
+    data-slideshow
+    data-count={count}
+  >
+    <div class="image-slideshow-stage">
+      <div class="image-slideshow-track" data-slideshow-track>
+        {images.map((src, i) => (
+          <div
+            class="image-slideshow-slide"
+            role="group"
+            aria-roledescription="slide"
+            aria-label={`Photo ${i + 1} of ${count}`}
+            data-slideshow-slide
+            data-index={i}
+          >
+            <img
+              src={src}
+              alt={`${name} — photo ${i + 1} of ${count}`}
+              loading={i === 0 ? 'eager' : 'lazy'}
+            />
+          </div>
+        ))}
+      </div>
+
+      <button class="image-slideshow-arrow image-slideshow-arrow-prev" type="button" data-slideshow-prev aria-label="Previous photo">‹</button>
+      <button class="image-slideshow-arrow image-slideshow-arrow-next" type="button" data-slideshow-next aria-label="Next photo">›</button>
+    </div>
+
+    <div class="image-slideshow-thumbs" data-slideshow-thumbs aria-hidden="true">
+      {images.map((src, i) => (
+        <button
+          class="image-slideshow-thumb"
+          type="button"
+          data-slideshow-thumb
+          data-index={i}
+          aria-label={`Show photo ${i + 1}`}
+        >
+          <img src={src} alt="" loading="lazy" />
+        </button>
+      ))}
+    </div>
+
+    <div class="image-slideshow-dots" data-slideshow-dots>
+      {images.map((_, i) => (
+        <button class="image-slideshow-dot" type="button" data-slideshow-dot data-index={i} aria-label={`Photo ${i + 1}`} />
+      ))}
+    </div>
+  </section>
+)}
+
+<style>
+  .image-slideshow { width: 100%; }
+  .image-slideshow-stage { position: relative; aspect-ratio: 1; background: #000; overflow: hidden; }
+  .image-slideshow-track { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; height: 100%; }
+  .image-slideshow-track::-webkit-scrollbar { display: none; }
+  .image-slideshow-slide { min-width: 100%; height: 100%; scroll-snap-align: center; }
+  .image-slideshow-slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  .image-slideshow-arrow {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    width: 38px; height: 38px; border-radius: 50%;
+    background: rgba(255,255,255,0.85); border: 0; cursor: pointer; font-size: 18px;
+    display: none;
+  }
+  .image-slideshow-arrow-prev { left: 12px; }
+  .image-slideshow-arrow-next { right: 12px; }
+
+  .image-slideshow-thumbs { display: none; gap: 8px; margin-top: 10px; }
+  .image-slideshow-thumb { flex: 1; aspect-ratio: 1; padding: 0; border: 0; background: transparent; cursor: pointer; opacity: 0.6; }
+  .image-slideshow-thumb[aria-current='true'] { opacity: 1; outline: 2px solid #1a1a1a; outline-offset: 1px; }
+  .image-slideshow-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 3px; }
+
+  .image-slideshow-dots { display: flex; justify-content: center; gap: 8px; padding: 12px 0 4px; }
+  .image-slideshow-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #CCC; border: 0; padding: 0; cursor: pointer;
+  }
+  .image-slideshow-dot[aria-current='true'] { background: #1a1a1a; }
+
+  @media (min-width: 768px) {
+    .image-slideshow-arrow { display: block; }
+    .image-slideshow-thumbs { display: flex; }
+    .image-slideshow-dots { display: none; }
+  }
+</style>
+
+<script>
+  function initSlideshow(): void {
+    document.querySelectorAll<HTMLElement>('[data-slideshow]').forEach((root) => {
+      if (root.dataset.bound) return;
+      root.dataset.bound = '';
+      const count = Number(root.dataset.count ?? '0');
+      const track = root.querySelector<HTMLElement>('[data-slideshow-track]')!;
+      const slides = Array.from(root.querySelectorAll<HTMLElement>('[data-slideshow-slide]'));
+      const thumbs = Array.from(root.querySelectorAll<HTMLElement>('[data-slideshow-thumb]'));
+      const dots = Array.from(root.querySelectorAll<HTMLElement>('[data-slideshow-dot]'));
+      const prev = root.querySelector<HTMLElement>('[data-slideshow-prev]')!;
+      const next = root.querySelector<HTMLElement>('[data-slideshow-next]')!;
+      let current = 0;
+
+      const setCurrent = (i: number): void => {
+        current = Math.max(0, Math.min(count - 1, i));
+        thumbs.forEach((t, idx) => {
+          if (idx === current) t.setAttribute('aria-current', 'true');
+          else t.removeAttribute('aria-current');
+        });
+        dots.forEach((d, idx) => {
+          if (idx === current) d.setAttribute('aria-current', 'true');
+          else d.removeAttribute('aria-current');
+        });
+      };
+
+      const goTo = (i: number): void => {
+        const target = slides[Math.max(0, Math.min(count - 1, i))];
+        if (target) target.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+      };
+
+      thumbs.forEach((t, i) => t.addEventListener('click', () => goTo(i)));
+      dots.forEach((d, i) => d.addEventListener('click', () => goTo(i)));
+      prev.addEventListener('click', () => goTo(current - 1));
+      next.addEventListener('click', () => goTo(current + 1));
+
+      root.tabIndex = 0;
+      root.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowLeft') { e.preventDefault(); goTo(current - 1); }
+        if (e.key === 'ArrowRight') { e.preventDefault(); goTo(current + 1); }
+      });
+
+      const io = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (entry.isIntersecting && entry.intersectionRatio > 0.6) {
+              const idx = Number((entry.target as HTMLElement).dataset.index ?? '0');
+              setCurrent(idx);
+            }
+          }
+        },
+        { root: track, threshold: [0.6] },
+      );
+      slides.forEach((s) => io.observe(s));
+
+      setCurrent(0);
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initSlideshow);
+  } else {
+    initSlideshow();
+  }
+</script>

@@ -1,0 +1,44 @@
+---
+import PublicLayout from '../../layouts/PublicLayout.astro';
+import Button from '../../components/ui/Button.astro';
+import { serverClient } from '../../lib/supabase/server';
+import { formatINR } from '../../lib/format';
+
+const code = Astro.url.searchParams.get('code');
+if (!code) return Astro.redirect('/', 302);
+
+const supabase = serverClient(Astro.request, Astro.cookies);
+const { data: order } = await supabase
+  .from('orders')
+  .select('code, total, payment_method, address_snapshot')
+  .eq('code', code)
+  .maybeSingle();
+---
+
+<PublicLayout title="Order placed">
+  <section class="mx-auto max-w-md px-4 py-20 text-center sm:px-6">
+    <p class="text-champagne mb-4 text-6xl">✓</p>
+    <h1 class="font-display mb-2 text-3xl font-light">Order placed</h1>
+    {
+      order ? (
+        <>
+          <p class="text-navy/70 mb-1">
+            Order <span class="font-mono">{order.code}</span>
+          </p>
+          <p class="text-navy/70 mb-1">Total: {formatINR(order.total)}</p>
+          <p class="text-navy/70 mb-8">
+            Shipping to {(order.address_snapshot as { city: string }).city}.
+          </p>
+          <p class="text-navy/60 mb-6 text-xs">
+            You'll find live status, AWB, and a reorder button in your account.
+          </p>
+          <Button variant="primary" href="/account/orders">
+            View my orders
+          </Button>
+        </>
+      ) : (
+        <p class="text-navy/70">Order details not found — please check your email.</p>
+      )
+    }
+  </section>
+</PublicLayout>

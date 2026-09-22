@@ -1,0 +1,73 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import ImageUploadField from '../../../components/admin/ImageUploadField.astro';
+import { requireRole } from '../../../lib/auth/session';
+import { getProductForEdit } from '../../../lib/admin/scents';
+
+const result = await requireRole(Astro as any, 'admin');
+if (result instanceof Response) return result;
+const product = await getProductForEdit(Astro.params.id!);
+if (!product) return Astro.redirect('/admin/products', 302);
+const parent = product.product as { id: string; base_price: number } | null;
+const priceRupees = Math.round((parent?.base_price ?? 0) / 100);
+const info = Astro.url.searchParams.get('info');
+const error = Astro.url.searchParams.get('error');
+---
+
+<AdminLayout title={`Edit: ${product.name}`}>
+  {info && <p class="mb-4 rounded border border-green-200 bg-green-50 p-3 text-sm text-[#0A8A00]">{info}</p>}
+  {error && <p class="mb-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-[#C44]">{error}</p>}
+  <form action="/api/admin/scent-update" method="post" class="max-w-lg space-y-4">
+    <input type="hidden" name="id" value={product.id} />
+    <div>
+      <label class="mb-1 block text-xs font-medium text-[#444]">Name</label>
+      <input name="name" required value={product.name} class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm" />
+    </div>
+    <div>
+      <label class="mb-1 block text-xs font-medium text-[#444]">Slug</label>
+      <input name="slug" required pattern="[a-z0-9-]+" value={product.slug} class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm font-mono" />
+    </div>
+    <div>
+      <label class="mb-1 block text-xs font-medium text-[#444]">Price (₹)</label>
+      <input name="price_rupees" type="number" required min="1" value={priceRupees} class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm font-mono" />
+    </div>
+    <div>
+      <label class="mb-1 block text-xs font-medium text-[#444]">Tagline</label>
+      <input name="tagline" value={product.tagline ?? ''} class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm" />
+    </div>
+    <div>
+      <label class="mb-1 block text-xs font-medium text-[#444]">Description</label>
+      <textarea name="description" rows="3" class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm">{product.description ?? ''}</textarea>
+    </div>
+    <div class="grid grid-cols-3 gap-3">
+      <div>
+        <label class="mb-1 block text-xs font-medium text-[#444]">Top notes</label>
+        <input name="top_notes" value={product.top_notes ?? ''} class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm" />
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-[#444]">Heart notes</label>
+        <input name="heart_notes" value={product.heart_notes ?? ''} class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm" />
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-[#444]">Base notes</label>
+        <input name="base_notes" value={product.base_notes ?? ''} class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm" />
+      </div>
+    </div>
+    <ImageUploadField mode="single" max={1} kind="scent" initial={(product.image_urls ?? []).slice(0, 1)} />
+    <ImageUploadField mode="multi" max={5} kind="scent" initial={(product.image_urls ?? []).slice(1, 6)} />
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="mb-1 block text-xs font-medium text-[#444]">Stock qty</label>
+        <input name="stock_qty" type="number" required min="0" value={product.stock_qty} class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm font-mono" />
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-[#444]">Sort order</label>
+        <input name="sort_order" type="number" required min="0" value={product.sort_order} class="w-full rounded border border-[#DDDDD8] px-3 py-2 text-sm font-mono" />
+      </div>
+    </div>
+    <label class="flex items-center gap-2 text-sm">
+      <input type="checkbox" name="active" value="true" checked={product.active} /> Active
+    </label>
+    <button type="submit" class="rounded bg-[#1A1A1A] px-5 py-2 text-sm text-white">Save changes</button>
+  </form>
+</AdminLayout>

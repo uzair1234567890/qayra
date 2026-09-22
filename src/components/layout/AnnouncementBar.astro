@@ -1,0 +1,35 @@
+---
+// Renders an active hero banner if one exists. Week 9 wires this to DB.
+import { serverClient } from '../../lib/supabase/server';
+const supabase = serverClient(Astro.request, Astro.cookies);
+
+let banner: { headline: string | null; cta_text: string | null; cta_url: string | null } | null = null;
+try {
+  const { data, error } = await supabase
+    .from('banners')
+    .select('headline, cta_text, cta_url')
+    .eq('position', 'announcement')
+    .or('active_from.is.null,active_from.lte.now()')
+    .or('active_until.is.null,active_until.gt.now()')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  // Silently ignore "table does not exist" errors (banners table added in Week 9)
+  if (!error) banner = data;
+} catch {
+  // Network or unexpected error — render nothing
+}
+---
+
+{
+  banner?.headline && (
+    <div class="bg-navy text-champagne px-4 py-2 text-center text-xs tracking-widest uppercase">
+      {banner.headline}
+      {banner.cta_url && banner.cta_text && (
+        <a href={banner.cta_url} class="ml-2 underline">
+          {banner.cta_text}
+        </a>
+      )}
+    </div>
+  )
+}

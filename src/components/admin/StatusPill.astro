@@ -1,0 +1,18 @@
+---
+interface Props { value: string; }
+const { value } = Astro.props;
+const map: Record<string, string> = {
+  active:    'bg-[#E8F5E9] text-[#0A8A00]',
+  draft:     'bg-[#FFF4E0] text-[#A67700]',
+  archived:  'bg-[#F0F0F0] text-[#666]',
+  paid:      'bg-[#E8F5E9] text-[#0A8A00]',
+  pending:   'bg-[#FFF4E0] text-[#A67700]',
+  shipped:   'bg-[#E3F2FD] text-[#0066CC]',
+  delivered: 'bg-[#E8F5E9] text-[#0A8A00]',
+  cancelled: 'bg-[#FFEAEA] text-[#C44]',
+  returned:  'bg-[#FFEAEA] text-[#C44]',
+};
+const cls = map[value] ?? 'bg-[#F0F0F0] text-[#666]';
+---
+
+<span class:list={['inline-block rounded-full px-2 py-0.5 text-[10px] font-medium', cls]}>{value}</span>
