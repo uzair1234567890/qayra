@@ -1,8 +1,10 @@
 import React from 'react';
+import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, Sparkles, ShieldCheck, Flame, Compass, Star } from 'lucide-react';
 import { getCachedProducts } from '@/lib/products';
+import { CAR_PERFUME_KEYWORDS } from '@/lib/seo-keywords';
 import ProductCard from '@/components/ProductCard';
 import FragranceQuiz from '@/components/FragranceQuiz';
 import GiftBundleSection from '@/components/GiftBundleSection';
@@ -10,6 +12,15 @@ import HeroInteractiveBackground from '@/components/HeroInteractiveBackground';
 import RealisticHangingBottle from '@/components/RealisticHangingBottle';
 
 export const revalidate = 60; // Revalidate every minute
+
+export const metadata: Metadata = {
+  title: 'Qayra | Luxury Car Fragrance & Hanging Car Perfumes',
+  description: 'Elevate your vehicle cabin with Qayra luxury hanging car perfumes. Handcrafted 10ml concentrated oud, amber, and leather fragrance diffusers with 30-day longevity.',
+  keywords: CAR_PERFUME_KEYWORDS,
+  alternates: {
+    canonical: 'https://qayra.in',
+  },
+};
 
 export default async function HomePage() {
   const formattedProducts = await getCachedProducts({ isActive: true });

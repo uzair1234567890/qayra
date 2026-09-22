@@ -1,0 +1,98 @@
+/**
+ * Complete list of 80 targeted SEO and AI indexing keywords for Qayra Car Perfumes.
+ * Injected in HTML metadata head tags, schema.org JSON-LD structured data, and llms.txt.
+ * Not displayed as raw text on the storefront UI to preserve luxury brand aesthetic.
+ */
+export const CAR_PERFUME_KEYWORDS: string[] = [
+  // Generic / Core Terms
+  'car perfume',
+  'car air freshener',
+  'car fragrance',
+  'car scent',
+  'auto perfume',
+  'vehicle fragrance',
+  'car cologne',
+  'car diffuser',
+  'in-car fragrance',
+  'automobile air freshener',
+
+  // Product Types
+  'hanging car perfume',
+  'car perfume bottle',
+  'car vent clip freshener',
+  'car freshener spray',
+  'car perfume gel',
+  'solid car freshener',
+  'car diffuser stick',
+  'car perfume ball',
+  'mini car diffuser',
+  'car AC vent perfume',
+  'refillable car perfume',
+  'car perfume pendant',
+  'clip-on car freshener',
+  'under-seat car freshener',
+  'car dashboard perfume',
+
+  // Scent / Fragrance Notes
+  'musk car perfume',
+  'lavender car freshener',
+  'vanilla car scent',
+  'citrus car freshener',
+  'sandalwood car perfume',
+  'oud car fragrance',
+  'rose car perfume',
+  'ocean breeze car freshener',
+  'new car smell spray',
+  'woody car fragrance',
+  'floral car freshener',
+  'fruity car perfume',
+  'mint car freshener',
+  'jasmine car scent',
+  'coffee scented car freshener',
+
+  // Brand / Style Descriptors
+  'luxury car perfume',
+  'premium car fragrance',
+  'long-lasting car freshener',
+  'natural car freshener',
+  'organic car fragrance',
+  'designer car perfume',
+  'imported car perfume',
+  'best car perfume brands',
+  'branded car air freshener',
+  'eco-friendly car freshener',
+
+  // Buying Intent Keywords
+  'car perfume online',
+  'buy car perfume',
+  'car perfume price',
+  'car perfume for men',
+  'car perfume for women',
+  'car perfume gift set',
+  'car perfume combo pack',
+  'car freshener near me',
+  'best car perfume 2026',
+  'car perfume subscription',
+
+  // Related Market & Category Terms (Search & Competitor Context)
+  'Amazon car perfume',
+  'Flipkart car perfume',
+  'Snapdeal car perfume',
+  'Meesho car perfume',
+  'Tata 1mg car perfume',
+  'Nykaa car fragrance',
+  'Ambipur car perfume',
+  'Areon car perfume',
+  'Uno Minda car perfume',
+  'My Shaldan car perfume',
+  'Godrej Aer car freshener',
+  'Bath and Body Works car spray',
+  'Autofresh car perfume',
+  'Carorbis car freshener',
+  'Boodmo car accessories',
+  'CarTrendz car perfume',
+  'Involve car perfume',
+  'Blanc car perfume',
+  'Team-BHP car perfume review',
+  'best car perfume forum',
+];

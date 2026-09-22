@@ -6,6 +6,7 @@ import Navbar from '@/components/Navbar';
 import HeaderBanner from '@/components/HeaderBanner';
 import CartDrawer from '@/components/CartDrawer';
 import Footer from '@/components/Footer';
+import { CAR_PERFUME_KEYWORDS } from '@/lib/seo-keywords';
 
 const serifFont = Cormorant_Garamond({
   subsets: ['latin'],
@@ -24,7 +25,7 @@ const sansFont = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   title: 'Qayra | Luxury Car Fragrance & Hanging Car Perfumes',
   description: 'Elevate your vehicle cabin with Qayra luxury hanging car perfumes. Handcrafted oud, amber, and leather fragrance diffusers with 30-day longevity.',
-  keywords: ['car perfume', 'luxury car fragrance', 'hanging car perfume', 'car diffuser', 'oud car scent'],
+  keywords: CAR_PERFUME_KEYWORDS,
   icons: {
     icon: '/icon.png',
     shortcut: '/favicon.ico',
@@ -76,6 +77,8 @@ export default function RootLayout({
                 areaServed: 'IN',
                 availableLanguage: ['en', 'hi'],
               },
+              keywords: CAR_PERFUME_KEYWORDS.join(', '),
+              knowsAbout: CAR_PERFUME_KEYWORDS,
             }),
           }}
         />
