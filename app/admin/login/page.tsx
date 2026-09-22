@@ -39,11 +39,6 @@ export default function AdminLoginPage() {
     }
   };
 
-  const fillDemoCredentials = () => {
-    setEmail('admin@qayra.com');
-    setPassword('admin123');
-  };
-
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-16">
       <div className="w-full max-w-md bg-[#141210] border border-[#29241F] rounded-2xl p-8 space-y-8 shadow-2xl relative overflow-hidden">
@@ -105,18 +100,6 @@ export default function AdminLoginPage() {
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>
-
-        {/* Demo Quick Fill Helper */}
-        <div className="pt-4 border-t border-[#29241F] text-center">
-          <button
-            type="button"
-            onClick={fillDemoCredentials}
-            className="inline-flex items-center space-x-1.5 text-xs text-[#D4AF37] hover:text-[#FDFBF7] transition-colors"
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Fill Default Admin Credentials (`admin@qayra.com`)</span>
-          </button>
-        </div>
       </div>
     </div>
   );
